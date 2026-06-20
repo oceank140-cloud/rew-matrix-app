@@ -912,12 +912,13 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
 
   const exportToCSV = () => {
     const certKeys = Object.keys(CERT_DICTIONARY);
-    // Buat Header Baris Pertama
-    let csvContent = "Nama Crew,Rank,Status," + certKeys.map(k => CERT_DICTIONARY[k].replace(/,/g, "")).join(",") + "\n";
+    
+    // Menggunakan titik koma (;) sebagai separator utama
+    let csvContent = "Nama Crew;Rank;Status;" + certKeys.map(k => CERT_DICTIONARY[k].replace(/;/g, "")).join(";") + "\n";
 
-    // Isi Data Baris per Crew
     filteredCrews.forEach(crew => {
-      let row = `"${crew.name}","${crew.rank}","${crew.status}"`;
+      // Membungkus data dengan kutip dan dipisah titik koma
+      let row = `"${crew.name}";"${crew.rank}";"${crew.status}"`;
       const crewDocs = certificates.filter(c => c.crewId === crew.id);
 
       certKeys.forEach(key => {
@@ -925,15 +926,15 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
         const foundCert = crewDocs.find(c => c.name.toLowerCase() === expectedName);
         if (foundCert) {
           const status = getExpiryStatus(foundCert.expiryDate);
-          row += `,"${status.label} (${status.days > 0 ? status.days + ' Hari' : 'Expired'})"`;
+          row += `;"${status.label} (${status.days > 0 ? status.days + ' Hari' : '0 Hari'})"`;
         } else {
-          row += `,"-"`;
+          row += `;"-"`;
         }
       });
       csvContent += row + "\n";
     });
 
-    // Proses Download menggunakan Blob murni browser (Offline Ready)
+    // Proses Download menggunakan Blob murni browser
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
