@@ -717,8 +717,7 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
       unsubCerts();
     };
   }, [fbUser]);
-
-  useEffect(() => {
+ useEffect(() => {
     // Only auto-select a crew if we are currently viewing "crew" layout but none is selected
     if (currentView === "crew" && !selectedCrewId && crews.length > 0) {
       setSelectedCrewId(crews[0].id);
@@ -912,13 +911,12 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
 
   const exportToCSV = () => {
     const certKeys = Object.keys(CERT_DICTIONARY);
-    
-    // Menggunakan titik koma (;) sebagai separator utama
-    let csvContent = "Nama Crew;Rank;Status;" + certKeys.map(k => CERT_DICTIONARY[k].replace(/;/g, "")).join(";") + "\n";
+    // Buat Header Baris Pertama
+    let csvContent = "Nama Crew,Rank,Status," + certKeys.map(k => CERT_DICTIONARY[k].replace(/,/g, "")).join(",") + "\n";
 
+    // Isi Data Baris per Crew
     filteredCrews.forEach(crew => {
-      // Membungkus data dengan kutip dan dipisah titik koma
-      let row = `"${crew.name}";"${crew.rank}";"${crew.status}"`;
+      let row = `"${crew.name}","${crew.rank}","${crew.status}"`;
       const crewDocs = certificates.filter(c => c.crewId === crew.id);
 
       certKeys.forEach(key => {
@@ -926,15 +924,15 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
         const foundCert = crewDocs.find(c => c.name.toLowerCase() === expectedName);
         if (foundCert) {
           const status = getExpiryStatus(foundCert.expiryDate);
-          row += `;"${status.label} (${status.days > 0 ? status.days + ' Hari' : '0 Hari'})"`;
+          row += `,"${status.label} (${status.days > 0 ? status.days + ' Hari' : 'Expired'})"`;
         } else {
-          row += `;"-"`;
+          row += `,"-"`;
         }
       });
       csvContent += row + "\n";
     });
 
-    // Proses Download menggunakan Blob murni browser
+    // Proses Download menggunakan Blob murni browser (Offline Ready)
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -1361,75 +1359,101 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                 </div>
               </div>
 
-              {filteredCrews.map((crew, index) => (
-                <div
-                  key={crew.id}
-                  className={`w-full group/crew relative rounded-xl transition-all duration-300 overflow-hidden border ${
-                    currentView === "crew" && selectedCrewId === crew.id
-                      ? "bg-yellow-200 border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.3)]"
-                      : "bg-[#fefce8] border-transparent hover:bg-yellow-100"
-                  }`}
-                >
-                  <div className="flex items-center justify-between p-3 md:p-4 relative">
-                    <div
-                      onClick={() => {
-                        setSelectedCrewId(crew.id);
-                        setCurrentView("crew");
-                      }}
-                      className="flex items-center gap-3 cursor-pointer flex-1 relative z-10"
-                    >
-                      <div
-                        className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold text-xs md:text-sm ${
-                          currentView === "crew" && selectedCrewId === crew.id
-                            ? "bg-slate-800 text-yellow-300"
-                            : "bg-yellow-200 text-slate-700"
-                        }`}
-                      >
+              {/* ENGINE ANIMASI 2026 */}
+              <style>{`
+                @supports (animation-timeline: view()) {
+                  @keyframes cinematic-scroll {
+                    0% { opacity: 0; transform: translateY(30px) scale(0.85); filter: blur(8px); }
+                    15% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0px); }
+                    85% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0px); }
+                    100% { opacity: 0; transform: translateY(-30px) scale(0.85); filter: blur(8px); }
+                  }
+                  .scroll-fx-2026 {
+                    animation: cinematic-scroll linear both;
+                    animation-timeline: view();
+                    animation-range: cover 0% cover 100%;
+                    will-change: transform, opacity, filter;
+                  }
+                }
+              `}</style>
+
+              {filteredCrews.map((crew, index) => {
+                // Hitung status dokumen untuk efek LED Bar 2026
+                const crewDocs = certificates.filter(c => c.crewId === crew.id);
+                let statusClass = "bg-gradient-to-b from-emerald-400 to-emerald-600 shadow-[2px_0_8px_rgba(16,185,129,0.25)]";
+
+                const hasExpired = crewDocs.some(c => {
+                  const diffDays = Math.ceil((new Date(c.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
+                  return diffDays <= 0;
+                });
+                const hasCritical = crewDocs.some(c => {
+                  const diffDays = Math.ceil((new Date(c.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
+                  return diffDays > 0 && diffDays <= 30;
+                });
+
+                if (hasExpired) statusClass = "bg-gradient-to-b from-rose-500 to-rose-700 shadow-[2px_0_8px_rgba(225,29,72,0.25)]";
+                else if (hasCritical) statusClass = "bg-gradient-to-b from-amber-400 to-amber-600 shadow-[2px_0_8px_rgba(245,158,11,0.25)]";
+
+                return (
+                  <div
+                    key={crew.id}
+                    onClick={() => {
+                      setSelectedCrewId(crew.id);
+                      setCurrentView("crew");
+                    }}
+                    className={`scroll-fx-2026 relative bg-gradient-to-br from-[#1B1E24] to-[#101216] border border-[#272B34] rounded-lg p-3 mb-3 flex items-center justify-between group/crew cursor-pointer overflow-hidden shadow-[0_4px_10px_rgba(0,0,0,0.4)] hover:border-[#3A404D] hover:-translate-y-0.5 transition-all duration-300 ${
+                      currentView === "crew" && selectedCrewId === crew.id ? "ring-1 ring-white/10 shadow-[0_0_15px_rgba(0,240,255,0.05)] bg-gradient-to-br from-[#1F2329] to-[#15181D]" : ""
+                    }`}
+                  >
+                    {/* 2026 LED Status Line Indicator */}
+                    <div className={`absolute left-0 top-0 bottom-0 w-[4px] ${statusClass}`}></div>
+
+                    <div className="flex items-center gap-3 pl-1 flex-1 truncate">
+                      {/* Avatar - Hardware Cutout Effect (Efek tenggelam ke dalam) */}
+                      <div className="w-9 h-9 rounded-md bg-[#0B0D10] text-[#E2E8F0] flex items-center justify-center font-bold text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] border border-[#242830] flex-shrink-0">
                         {crew.name.charAt(0).toUpperCase()}
                       </div>
-                      <div className="flex-1 truncate">
-                        <h3
-                          className={`font-semibold text-xs md:text-sm truncate ${
-                            currentView === "crew" && selectedCrewId === crew.id
-                              ? "text-slate-900"
-                              : "text-slate-800"
-                          }`}
-                        >
+                      
+                      {/* Teks Nama & Pangkat */}
+                      <div className="flex flex-col truncate">
+                        <h3 className={`text-[#F1F5F9] font-bold text-[13px] uppercase tracking-wide group-hover/crew:text-cyan-300 transition-colors drop-shadow-md truncate ${currentView === "crew" && selectedCrewId === crew.id ? "text-cyan-400" : ""}`}>
                           {crew.name}
                         </h3>
-                        <p className="text-[10px] md:text-xs text-slate-600 truncate mt-0.5">
+                        <p className="text-[#64748B] text-[11px] mt-0.5 uppercase tracking-wider font-medium truncate">
                           {crew.rank}
                         </p>
                       </div>
                     </div>
+
+                    {/* Area Tombol Aksi (Edit/Delete) */}
                     {isPip && (
-                      <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover/crew:opacity-100 transition-opacity duration-200 relative z-20 bg-white/50 backdrop-blur-sm rounded-lg px-1 md:bg-transparent md:backdrop-blur-none pl-2">
+                      <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover/crew:opacity-100 transition-opacity pl-2 flex-shrink-0 relative z-10">
                         <button
-                          onClick={() => handleMoveCrew(index, -1)}
+                          onClick={(e) => { e.stopPropagation(); handleMoveCrew(index, -1); }}
                           disabled={index === 0}
-                          className={`p-1.5 md:p-1 transition-colors rounded ${index === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-500 hover:text-slate-900'}`}
+                          className={`p-1.5 md:p-1 transition-colors rounded ${index === 0 ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-white'}`}
                           title="Naikkan"
                         >
                           <Icon name="ChevronUp" size={13} />
                         </button>
                         <button
-                          onClick={() => handleMoveCrew(index, 1)}
+                          onClick={(e) => { e.stopPropagation(); handleMoveCrew(index, 1); }}
                           disabled={index === filteredCrews.length - 1}
-                          className={`p-1.5 md:p-1 transition-colors rounded ${index === filteredCrews.length - 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-500 hover:text-slate-900'}`}
+                          className={`p-1.5 md:p-1 transition-colors rounded ${index === filteredCrews.length - 1 ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-white'}`}
                           title="Turunkan"
                         >
                           <Icon name="ChevronDown" size={13} />
                         </button>
                         <button
-                          onClick={() => handleStartEditCrew(crew)}
-                          className="p-1.5 md:p-1 text-slate-500 hover:text-blue-600 transition-colors rounded"
+                          onClick={(e) => { e.stopPropagation(); handleStartEditCrew(crew); }}
+                          className="p-1.5 md:p-1 text-slate-400 hover:text-cyan-400 transition-colors rounded"
                           title="Edit"
                         >
                           <Icon name="Edit2" size={13} />
                         </button>
                         <button
-                          onClick={() => handleDeleteCrew(crew.id)}
-                          className="p-1.5 md:p-1 text-slate-500 hover:text-red-600 transition-colors rounded"
+                          onClick={(e) => { e.stopPropagation(); handleDeleteCrew(crew.id); }}
+                          className="p-1.5 md:p-1 text-slate-400 hover:text-red-400 transition-colors rounded"
                           title="Hapus"
                         >
                           <Icon name="Trash2" size={13} />
@@ -1437,8 +1461,8 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                       </div>
                     )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {filteredCrews.length === 0 && (
                 <div className="text-center p-4 text-slate-600 text-xs mt-4 border border-dashed border-slate-400/50 rounded-lg bg-white/5">
                   {crews.length === 0 ? "Database kosong. Silakan tambah crew." : "Tidak ada crew yang sesuai filter."}
