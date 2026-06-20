@@ -88,6 +88,16 @@ const CERT_DICTIONARY = {
   aot: "Advanced Oil Tanker (AOT)",
   act: "Advanced Chemical Tanker (ACT)",
   agt: "Advanced Gas Tanker (AGT)",
+  mcu: "Medical Check-Up (MCU)",
+  sb: "Seaman Book (Buku Pelaut)",
+  radar: "Radar Observer / Simulator (RADAR)",
+  arpa: "Automatic Radar Plotting Aids (ARPA)",
+  ecdis: "Electronic Chart Display and Information System (ECDIS)",
+  gmdss: "Global Maritime Distress and Safety System (GMDSS)",
+  oru: "Operator Radio Umum (ORU)",
+  imdg: "International Maritime Dangerous Goods (IMDG)",
+  ismc: "International Safety Management Code (ISM Code)",
+  endorse: "Certificate of Endorsement (COE / Endorse)",
 };
 
 const sanitizeInput = (str) => {
@@ -679,6 +689,11 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
 
   const selectedCrew = crews.find((c) => c.id === selectedCrewId);
   const crewCerts = selectedCrewId ? certificates.filter((c) => c.crewId === selectedCrew?.id) : [];
+  const sortedCrewCerts = [...crewCerts].sort((a, b) => {
+    const orderA = a.order !== undefined ? a.order : 999999;
+    const orderB = b.order !== undefined ? b.order : 999999;
+    return orderA - orderB;
+  });
   const isPip = userRole === "pip";
 
   const handleSaveCrew = async (e) => {
@@ -797,9 +812,34 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
     if (certId) {
       await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'certificates', certId), certData);
     } else {
+      const newOrder = crewCerts.length > 0 ? Math.max(...crewCerts.map(c => c.order !== undefined ? c.order : 0)) + 1 : 0;
+      certData.order = newOrder;
       await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'certificates'), certData);
     }
     setIsModalOpen(false);
+  };
+
+  const handleMoveCert = async (index, direction) => {
+    if (!fbUser) return;
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= sortedCrewCerts.length) return;
+
+    const current = sortedCrewCerts[index];
+    const target = sortedCrewCerts[newIndex];
+
+    const currentOrderSafe = current.order !== undefined ? current.order : index;
+    const targetOrderSafe = target.order !== undefined ? target.order : newIndex;
+
+    let newCurrentOrder = targetOrderSafe;
+    let newTargetOrder = currentOrderSafe;
+
+    if (newCurrentOrder === newTargetOrder) {
+      newCurrentOrder = index + direction;
+      newTargetOrder = index;
+    }
+
+    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'certificates', current.id), { order: newCurrentOrder });
+    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'certificates', target.id), { order: newTargetOrder });
   };
 
   const handleDeleteCert = (id) => {
@@ -1463,7 +1503,7 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                   </div>
                 )}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 animate-fadeIn">
-                {crewCerts.map((cert) => {
+                {sortedCrewCerts.map((cert, index) => {
                   const status = getExpiryStatus(cert.expiryDate);
                   const isExpired = status.days <= 0;
                   return (
@@ -1493,6 +1533,20 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                         </div>
                         {isPip && (
                           <div className="flex gap-1 md:gap-1.5 flex-shrink-0">
+                            <button
+                              onClick={() => handleMoveCert(index, -1)}
+                              disabled={index === 0}
+                              className={`p-1.5 rounded-md ${index === 0 ? 'text-gray-600 cursor-not-allowed bg-transparent' : 'text-gray-400 hover:text-cyan-400 bg-white/5 md:bg-black/20'}`}
+                            >
+                              <ChevronUp size={12} className="md:w-3.5 md:h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleMoveCert(index, 1)}
+                              disabled={index === sortedCrewCerts.length - 1}
+                              className={`p-1.5 rounded-md ${index === sortedCrewCerts.length - 1 ? 'text-gray-600 cursor-not-allowed bg-transparent' : 'text-gray-400 hover:text-cyan-400 bg-white/5 md:bg-black/20'}`}
+                            >
+                              <ChevronDown size={12} className="md:w-3.5 md:h-3.5" />
+                            </button>
                             <button
                               onClick={() => {
                                 setEditingCert(cert);
