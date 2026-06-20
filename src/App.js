@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
-  ShieldCheck,
+  
   Lock,
   User,
   Users,
@@ -18,6 +18,8 @@ import {
   Bell,
   Menu,
   X,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import { initializeApp } from "firebase/app";
 import {
@@ -37,11 +39,7 @@ import {
 } from "firebase/firestore";
 
 // --- SETUP FIREBASE ---
-const envConfig =
-  typeof __firebase_config !== "undefined"
-    ? JSON.parse(__firebase_config)
-    : null;
-const firebaseConfig = {
+const defaultFirebaseConfig = {
   apiKey: "AIzaSyBtX0Yu4gA8KUseT2SIRqoHAVBvpJLzb-M",
   authDomain: "crew-matrix-app.firebaseapp.com",
   projectId: "crew-matrix-app",
@@ -50,9 +48,21 @@ const firebaseConfig = {
   appId: "1:383886678503:web:741913d8c4ba67ce630542",
   measurementId: "G-4CTVL1WNBC",
 };
+
+// Tambahkan komentar ini untuk mengabaikan error:
+// eslint-disable-next-line no-undef
+const firebaseConfig = typeof __firebase_config !== "undefined"
+  // eslint-disable-next-line no-undef
+  ? JSON.parse(__firebase_config)
+  : defaultFirebaseConfig;
+
 const app = initializeApp(firebaseConfig);
 const authFirebase = getAuth(app);
 const db = getFirestore(app);
+
+// Tambahkan komentar ini juga:
+// eslint-disable-next-line no-undef
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'crew-matrix-default';
 
 // --- KAMUS SINGKATAN SERTIFIKAT PELAUT ---
 const CERT_DICTIONARY = {
@@ -252,140 +262,30 @@ const HologramWatermark = () => (
       strokeWidth="2"
       className="text-cyan-300 drop-shadow-[0_0_8px_rgba(0,240,255,0.5)] w-[250px] h-[250px] md:w-[500px] md:h-[500px]"
     >
-      <circle
-        cx="125"
-        cy="80"
-        r="28"
-        fill="currentColor"
-        stroke="none"
-        opacity="0.2"
-      />
-      <circle
-        cx="100"
-        cy="100"
-        r="75"
-        strokeWidth="4"
-        strokeDasharray="25 15"
-        opacity="0.8"
-      />
-      <line
-        x1="100"
-        y1="5"
-        x2="100"
-        y2="25"
-        strokeWidth="5"
-        strokeLinecap="round"
-      />
-      <line
-        x1="100"
-        y1="175"
-        x2="100"
-        y2="195"
-        strokeWidth="5"
-        strokeLinecap="round"
-      />
-      <line
-        x1="5"
-        y1="100"
-        x2="25"
-        y2="100"
-        strokeWidth="5"
-        strokeLinecap="round"
-      />
-      <line
-        x1="175"
-        y1="100"
-        x2="195"
-        y2="100"
-        strokeWidth="5"
-        strokeLinecap="round"
-      />
-      <line
-        x1="33"
-        y1="33"
-        x2="47"
-        y2="47"
-        strokeWidth="5"
-        strokeLinecap="round"
-      />
-      <line
-        x1="167"
-        y1="167"
-        x2="153"
-        y2="153"
-        strokeWidth="5"
-        strokeLinecap="round"
-      />
-      <line
-        x1="167"
-        y1="33"
-        x2="153"
-        y2="47"
-        strokeWidth="5"
-        strokeLinecap="round"
-      />
-      <line
-        x1="33"
-        y1="167"
-        x2="47"
-        y2="153"
-        strokeWidth="5"
-        strokeLinecap="round"
-      />
+      <circle cx="125" cy="80" r="28" fill="currentColor" stroke="none" opacity="0.2" />
+      <circle cx="100" cy="100" r="75" strokeWidth="4" strokeDasharray="25 15" opacity="0.8" />
+      <line x1="100" y1="5" x2="100" y2="25" strokeWidth="5" strokeLinecap="round" />
+      <line x1="100" y1="175" x2="100" y2="195" strokeWidth="5" strokeLinecap="round" />
+      <line x1="5" y1="100" x2="25" y2="100" strokeWidth="5" strokeLinecap="round" />
+      <line x1="175" y1="100" x2="195" y2="100" strokeWidth="5" strokeLinecap="round" />
+      <line x1="33" y1="33" x2="47" y2="47" strokeWidth="5" strokeLinecap="round" />
+      <line x1="167" y1="167" x2="153" y2="153" strokeWidth="5" strokeLinecap="round" />
+      <line x1="167" y1="33" x2="153" y2="47" strokeWidth="5" strokeLinecap="round" />
+      <line x1="33" y1="167" x2="47" y2="153" strokeWidth="5" strokeLinecap="round" />
       <circle cx="100" cy="35" r="8" strokeWidth="4" />
       <line x1="100" y1="43" x2="100" y2="165" strokeWidth="6" />
-      <line
-        x1="75"
-        y1="55"
-        x2="125"
-        y2="55"
-        strokeWidth="5"
-        strokeLinecap="round"
-      />
-      <path
-        d="M 35 125 Q 100 200 165 125"
-        strokeWidth="6"
-        strokeLinecap="round"
-      />
-      <polygon
-        points="30,120 48,122 38,138"
-        fill="currentColor"
-        stroke="none"
-      />
-      <polygon
-        points="170,120 152,122 162,138"
-        fill="currentColor"
-        stroke="none"
-      />
-      <polygon
-        points="100,180 88,162 112,162"
-        fill="currentColor"
-        stroke="none"
-      />
-      <path
-        d="M 50 110 L 85 110 L 85 95 L 95 95 L 95 85 L 105 85 L 105 70 L 115 70 L 115 110 L 150 110 L 130 140 L 70 140 Z"
-        fill="currentColor"
-        stroke="none"
-        opacity="0.9"
-      />
+      <line x1="75" y1="55" x2="125" y2="55" strokeWidth="5" strokeLinecap="round" />
+      <path d="M 35 125 Q 100 200 165 125" strokeWidth="6" strokeLinecap="round" />
+      <polygon points="30,120 48,122 38,138" fill="currentColor" stroke="none" />
+      <polygon points="170,120 152,122 162,138" fill="currentColor" stroke="none" />
+      <polygon points="100,180 88,162 112,162" fill="currentColor" stroke="none" />
+      <path d="M 50 110 L 85 110 L 85 95 L 95 95 L 95 85 L 105 85 L 105 70 L 115 70 L 115 110 L 150 110 L 130 140 L 70 140 Z" fill="currentColor" stroke="none" opacity="0.9" />
       <circle cx="85" cy="102" r="1.5" fill="#050A15" />
       <circle cx="95" cy="102" r="1.5" fill="#050A15" />
       <circle cx="105" cy="102" r="1.5" fill="#050A15" />
       <circle cx="115" cy="102" r="1.5" fill="#050A15" />
-      <path
-        d="M 40 150 Q 70 135 100 150 T 160 150"
-        strokeWidth="3"
-        opacity="0.7"
-        strokeLinecap="round"
-        fill="none"
-      />
-      <path
-        d="M 50 160 Q 80 145 100 160 T 150 160"
-        strokeWidth="2"
-        opacity="0.4"
-        strokeLinecap="round"
-        fill="none"
-      />
+      <path d="M 40 150 Q 70 135 100 150 T 160 150" strokeWidth="3" opacity="0.7" strokeLinecap="round" fill="none" />
+      <path d="M 50 160 Q 80 145 100 160 T 150 160" strokeWidth="2" opacity="0.4" strokeLinecap="round" fill="none" />
     </svg>
   </div>
 );
@@ -557,9 +457,17 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCert, setEditingCert] = useState(null);
 
+  const sortedCrews = [...crews].sort((a, b) => {
+    const orderA = a.order !== undefined ? a.order : 999999;
+    const orderB = b.order !== undefined ? b.order : 999999;
+    return orderA - orderB;
+  });
+
   useEffect(() => {
     if (!fbUser) return;
-    const crewsRef = collection(db, "crews");
+    
+    // Using platform's mandatory collection path for public workspace data
+    const crewsRef = collection(db, 'artifacts', appId, 'public', 'data', 'crews');
     const unsubCrews = onSnapshot(
       crewsRef,
       (snapshot) => {
@@ -572,7 +480,7 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
       (error) => console.error("Error fetching crews:", error)
     );
 
-    const certsRef = collection(db, "certificates");
+    const certsRef = collection(db, 'artifacts', appId, 'public', 'data', 'certificates');
     const unsubCerts = onSnapshot(
       certsRef,
       (snapshot) => {
@@ -604,21 +512,51 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
     e.preventDefault();
     if (!inputCrewName.trim() || !inputCrewRank.trim() || !fbUser) return;
 
+    const newOrder = crews.length > 0 ? Math.max(...crews.map(c => c.order !== undefined ? c.order : 0)) + 1 : 0;
+
     const crewData = {
       name: sanitizeInput(inputCrewName),
       rank: sanitizeInput(inputCrewRank),
       status: "Onboard",
+      order: newOrder,
     };
 
     if (editingCrewId) {
-      await updateDoc(doc(db, "crews", editingCrewId), crewData);
+      const existingCrew = crews.find(c => c.id === editingCrewId);
+      if (existingCrew && existingCrew.order !== undefined) {
+        crewData.order = existingCrew.order;
+      }
+      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'crews', editingCrewId), crewData);
       setEditingCrewId(null);
     } else {
-      const newDocRef = await addDoc(collection(db, "crews"), crewData);
+      const newDocRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'crews'), crewData);
       setSelectedCrewId(newDocRef.id);
     }
     setInputCrewName("");
     setInputCrewRank("");
+  };
+
+  const handleMoveCrew = async (index, direction) => {
+    if (!fbUser) return;
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= sortedCrews.length) return;
+
+    const current = sortedCrews[index];
+    const target = sortedCrews[newIndex];
+
+    const currentOrderSafe = current.order !== undefined ? current.order : index;
+    const targetOrderSafe = target.order !== undefined ? target.order : newIndex;
+
+    let newCurrentOrder = targetOrderSafe;
+    let newTargetOrder = currentOrderSafe;
+
+    if (newCurrentOrder === newTargetOrder) {
+      newCurrentOrder = index + direction;
+      newTargetOrder = index;
+    }
+
+    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'crews', current.id), { order: newCurrentOrder });
+    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'crews', target.id), { order: newTargetOrder });
   };
 
   const handleStartEditCrew = (crew) => {
@@ -634,10 +572,10 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
         "Hapus crew ini beserta semua sertifikatnya secara permanen?"
       )
     ) {
-      await deleteDoc(doc(db, "crews", id));
+      await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'crews', id));
       const certsToDelete = certificates.filter((cert) => cert.crewId === id);
       for (const cert of certsToDelete) {
-        await deleteDoc(doc(db, "certificates", cert.id));
+        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'certificates', cert.id));
       }
       if (selectedCrewId === id) setSelectedCrewId(null);
       if (editingCrewId === id) {
@@ -730,9 +668,9 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
     delete certData.id;
 
     if (certId) {
-      await updateDoc(doc(db, "certificates", certId), certData);
+      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'certificates', certId), certData);
     } else {
-      await addDoc(collection(db, "certificates"), certData);
+      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'certificates'), certData);
     }
     setIsModalOpen(false);
   };
@@ -740,7 +678,7 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
   const handleDeleteCert = async (id) => {
     if (!fbUser) return;
     if (window.confirm("Hapus sertifikat ini permanen?")) {
-      await deleteDoc(doc(db, "certificates", id));
+      await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'certificates', id));
     }
   };
 
@@ -753,10 +691,10 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
         ></div>
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 transform md:relative md:translate-x-0 transition-all duration-300 ease-in-out flex-shrink-0 bg-[#0A1128] border-r border-white/5 shadow-[10px_0_30px_rgba(0,0,0,0.5)] ${
+        className={`fixed inset-y-0 left-0 z-50 transform md:relative md:translate-x-0 transition-all duration-300 ease-in-out flex-shrink-0 bg-[#1c1d21] rounded-r-[30px] overflow-hidden shadow-[10px_0_30px_rgba(0,0,0,0.5)] ${
           isSidebarOpen
             ? "translate-x-0 w-80 opacity-100"
-            : "-translate-x-full w-80 md:w-0 md:opacity-0 overflow-hidden border-none"
+            : "-translate-x-full w-80 md:w-0 md:opacity-0 border-none"
         }`}
       >
         <div className="w-80 h-full flex flex-col">
@@ -781,30 +719,30 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
             <div className="flex items-center gap-1">
               <button
                 onClick={onLogout}
-                className="p-2 text-gray-500 hover:text-red-400 bg-white/5 rounded-lg flex-shrink-0 transition-colors"
+                className="p-2 text-gray-400 hover:text-red-400 bg-white/5 rounded-lg flex-shrink-0 transition-colors"
               >
                 <LogOut size={16} />
               </button>
               <button
                 onClick={() => setIsSidebarOpen(false)}
-                className="p-2 text-gray-500 hover:text-white bg-white/5 rounded-lg md:hidden"
+                className="p-2 text-gray-400 hover:text-white bg-white/5 rounded-lg md:hidden"
               >
                 <X size={16} />
               </button>
             </div>
           </div>
           <div className="p-4 flex-1 overflow-hidden flex flex-col">
-            <p className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wider pl-2">
+            <p className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider pl-2">
               Active Roster
             </p>
             <div className="space-y-2 overflow-y-auto flex-1 pr-2 pb-4">
-              {crews.map((crew) => (
+              {sortedCrews.map((crew, index) => (
                 <div
                   key={crew.id}
                   className={`w-full group/crew relative rounded-xl transition-all duration-300 overflow-hidden border ${
                     selectedCrewId === crew.id
-                      ? "bg-cyan-900/30 border-cyan-500/50 shadow-[0_0_15px_rgba(0,240,255,0.15)]"
-                      : "bg-white/5 border-transparent hover:bg-white/10"
+                      ? "bg-yellow-200 border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.3)]"
+                      : "bg-[#fefce8] border-transparent hover:bg-yellow-100"
                   }`}
                 >
                   <div className="flex items-center justify-between p-3 md:p-4 relative">
@@ -815,8 +753,8 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                       <div
                         className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold text-xs md:text-sm ${
                           selectedCrewId === crew.id
-                            ? "bg-cyan-500 text-slate-900"
-                            : "bg-gray-700 text-gray-300"
+                            ? "bg-slate-800 text-yellow-300"
+                            : "bg-yellow-200 text-slate-700"
                         }`}
                       >
                         {crew.name.charAt(0).toUpperCase()}
@@ -825,28 +763,46 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                         <h3
                           className={`font-semibold text-xs md:text-sm truncate ${
                             selectedCrewId === crew.id
-                              ? "text-white"
-                              : "text-gray-300"
+                              ? "text-slate-900"
+                              : "text-slate-800"
                           }`}
                         >
                           {crew.name}
                         </h3>
-                        <p className="text-[10px] md:text-xs text-gray-500 truncate">
+                        <p className="text-[10px] md:text-xs text-slate-600 truncate">
                           {crew.rank}
                         </p>
                       </div>
                     </div>
                     {isPip && (
-                      <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover/crew:opacity-100 transition-opacity duration-200 relative z-20 bg-transparent md:bg-gradient-to-l from-[#0A1128] via-[#0A1128] pl-2">
+                      <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover/crew:opacity-100 transition-opacity duration-200 relative z-20 bg-white/50 backdrop-blur-sm rounded-lg px-1 md:bg-transparent md:backdrop-blur-none pl-2">
+                        <button
+                          onClick={() => handleMoveCrew(index, -1)}
+                          disabled={index === 0}
+                          className={`p-1.5 md:p-1 transition-colors rounded ${index === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-500 hover:text-slate-900'}`}
+                          title="Naikkan"
+                        >
+                          <ChevronUp size={13} />
+                        </button>
+                        <button
+                          onClick={() => handleMoveCrew(index, 1)}
+                          disabled={index === sortedCrews.length - 1}
+                          className={`p-1.5 md:p-1 transition-colors rounded ${index === sortedCrews.length - 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-500 hover:text-slate-900'}`}
+                          title="Turunkan"
+                        >
+                          <ChevronDown size={13} />
+                        </button>
                         <button
                           onClick={() => handleStartEditCrew(crew)}
-                          className="p-1.5 md:p-1 text-gray-400 hover:text-cyan-400 transition-colors bg-white/5 md:bg-transparent rounded"
+                          className="p-1.5 md:p-1 text-slate-500 hover:text-blue-600 transition-colors rounded"
+                          title="Edit"
                         >
                           <Edit2 size={13} />
                         </button>
                         <button
                           onClick={() => handleDeleteCrew(crew.id)}
-                          className="p-1.5 md:p-1 text-gray-400 hover:text-red-400 transition-colors bg-white/5 md:bg-transparent rounded"
+                          className="p-1.5 md:p-1 text-slate-500 hover:text-red-600 transition-colors rounded"
+                          title="Hapus"
                         >
                           <Trash2 size={13} />
                         </button>
@@ -856,7 +812,7 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                 </div>
               ))}
               {crews.length === 0 && (
-                <div className="text-center p-4 text-gray-500 text-sm mt-4 border border-dashed border-gray-700 rounded-lg">
+                <div className="text-center p-4 text-slate-600 text-sm mt-4 border border-dashed border-slate-400 rounded-lg bg-[#fefce8]">
                   Database kosong. <br /> Silakan tambah crew baru.
                 </div>
               )}
@@ -983,7 +939,7 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                 </div>
               </div>
             )}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {crewCerts.map((cert) => {
               const status = getExpiryStatus(cert.expiryDate);
               const isExpired = status.days <= 0;
@@ -1111,8 +1067,7 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                   className="text-gray-600 mb-3 md:w-12 md:h-12 md:mb-4"
                 />
                 <p className="text-gray-400 text-xs md:text-sm text-center px-4">
-                  Belum ada crew yang didaftarkan.{" "}
-                  <br className="hidden md:block" /> Silakan tambah crew baru di
+                  Belum ada crew yang didaftarkan. <br className="hidden md:block" /> Silakan tambah crew baru di
                   menu.
                 </p>
               </div>
@@ -1141,10 +1096,17 @@ export default function App() {
 
   useEffect(() => {
     const initAuth = async () => {
-      if (typeof __initial_auth_token !== "undefined" && __initial_auth_token) {
-        await signInWithCustomToken(authFirebase, __initial_auth_token);
-      } else {
-        await signInAnonymously(authFirebase);
+      try {
+        // Tambahkan komentar ini untuk mengabaikan error:
+        // eslint-disable-next-line no-undef
+        if (typeof __initial_auth_token !== "undefined" && __initial_auth_token) {
+          // eslint-disable-next-line no-undef
+          await signInWithCustomToken(authFirebase, __initial_auth_token);
+        } else {
+          await signInAnonymously(authFirebase);
+        }
+      } catch (error) {
+        console.error("Firebase Auth Error:", error);
       }
     };
     initAuth();
