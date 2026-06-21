@@ -227,23 +227,107 @@ const LoginPage = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[#050A15] p-4">
+      {/* ENGINE ANIMASI LOGO WAHYU1988 - DUAL TONE 2026 */}
+      <style>{`
+        /* Animasi Pendaran Cyan untuk Angka */
+        @keyframes neon-pulse-cyan {
+          0%, 100% { text-shadow: 0 0 10px rgba(0, 229, 255, 0.4); }
+          50% { text-shadow: 0 0 15px rgba(0, 229, 255, 0.8), 0 0 25px rgba(0, 229, 255, 0.4); }
+        }
+        /* Animasi Pendaran Magenta untuk Tanda Kurung */
+        @keyframes neon-pulse-magenta {
+          0%, 100% { text-shadow: 0 0 10px rgba(217, 70, 239, 0.4), 0 0 20px rgba(217, 70, 239, 0.2); }
+          50% { text-shadow: 0 0 15px rgba(217, 70, 239, 0.8), 0 0 30px rgba(217, 70, 239, 0.5); }
+        }
+        @keyframes bracket-breathe-left {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(-4px); }
+        }
+        @keyframes bracket-breathe-right {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(4px); }
+        }
+        .animate-neon-cyan {
+          animation: neon-pulse-cyan 3s ease-in-out infinite;
+        }
+        .animate-neon-magenta {
+          animation: neon-pulse-magenta 3s ease-in-out infinite;
+        }
+        .animate-bracket-l {
+          animation: bracket-breathe-left 4s ease-in-out infinite;
+        }
+        .animate-bracket-r {
+          animation: bracket-breathe-right 4s ease-in-out infinite;
+        }
+        
+        /* ENGINE ANIMASI TITANIUM CINEMATIC 2026 */
+        @keyframes cine-fly-left {
+          0% { opacity: 0; transform: translateX(-80px) scale(1.1); filter: blur(8px); }
+          100% { opacity: 1; transform: translateX(0) scale(1); filter: blur(0px); }
+        }
+        @keyframes cine-fly-right {
+          0% { opacity: 0; transform: translateX(80px) scale(1.1); filter: blur(8px); }
+          100% { opacity: 1; transform: translateX(0) scale(1); filter: blur(0px); }
+        }
+        @keyframes cine-fly-up {
+          0% { opacity: 0; transform: translateY(40px); filter: blur(5px); }
+          100% { opacity: 1; transform: translateY(0); filter: blur(0px); }
+        }
+        .anim-cine-title {
+          animation: cine-fly-left 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        }
+        .anim-cine-sub {
+          animation: cine-fly-right 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s both; /* Delay 0.3 detik */
+        }
+        .anim-cine-text {
+          animation: cine-fly-up 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.6s both; /* Delay 0.6 detik */
+        }
+        .anim-cine-btn {
+          animation: cine-fly-up 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.9s both; /* Delay 0.9 detik */
+        }
+      `}</style>
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/20 rounded-full blur-[120px]"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-cyan-500/20 rounded-full blur-[100px]"></div>
       <div className="glass-panel p-6 md:p-10 rounded-2xl w-full max-w-md relative z-10">
-        <div className="flex flex-col items-center justify-center mb-8 relative">
-          <div className="absolute bottom-0 w-20 h-4 bg-cyan-500/30 rounded-[50%] blur-sm wave-glow"></div>
-          <div className="relative p-4 md:p-5 bg-cyan-900/30 rounded-full border border-cyan-400/50 shadow-[0_0_25px_rgba(0,240,255,0.3)] ship-anim overflow-hidden backdrop-blur-md">
-            <div className="hologram-line"></div>
-            <Icon name="Ship" size={50} className="text-cyan-300 relative z-10" strokeWidth={1.5} />
+        
+        {/* AREA LOGO & JUDUL - TITANIUM CINEMATIC 2026 */}
+        <div className="flex flex-col items-center justify-center mb-8 relative z-10 cursor-default select-none overflow-hidden pb-2 pt-2">
+          
+          {/* 1. LOGO WAHYU1988 VERTIKAL (Tanpa Lingkaran Luar) */}
+          <div className="flex flex-col items-center justify-center mb-6 group">
+            <span className="text-fuchsia-500 text-3xl font-light leading-none mb-1 animate-neon-magenta animate-bracket-l">
+              [
+            </span>
+            <span className="text-white text-xl md:text-2xl font-black leading-none tracking-[0.15em] drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]">
+              WHY
+            </span>
+            <span className="text-fuchsia-500 font-mono text-[9px] md:text-[10px] font-bold tracking-[0.3em] mt-1.5 opacity-80 animate-neon-cyan">
+              1988
+            </span>
+            <span className="text-fuchsia-500 text-3xl font-light leading-none mt-1 animate-neon-magenta animate-bracket-r">
+              ]
+            </span>
           </div>
-        </div>
 
-        <h2 className="text-2xl md:text-3xl font-black text-center text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-500 drop-shadow-[0_0_15px_rgba(0,240,255,0.4)] tracking-widest mb-1">
-          CREW MATRIX SERTIFIKAT
-        </h2>
-        <p className="text-center text-cyan-500/70 text-xs md:text-sm mb-8 uppercase tracking-widest">
-          Enterprise Certificate System
-        </p>
+          {/* 2. JUDUL TITANIUM (Gradient Metallic Text) */}
+          <h2 
+            className="text-4xl md:text-[42px] font-bold uppercase tracking-[0.15em] anim-cine-title mb-1 bg-clip-text text-transparent bg-gradient-to-b from-white via-slate-300 to-slate-500 drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
+            style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif' }}
+          >
+            Crew Matrix
+          </h2>
+          
+          {/* 3. SUBJUDUL MAGENTA */}
+          <h3 className="text-sm md:text-base font-semibold tracking-[0.4em] text-[#d946ef] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] uppercase mb-3 anim-cine-sub">
+            Sertifikat
+          </h3>
+          
+          {/* 4. TEKS KECIL BAWAH */}
+          <p className="text-[#64748b] text-[9px] md:text-[10px] font-mono tracking-[0.3em] uppercase anim-cine-text">
+            Enterprise Certificate System
+          </p>
+
+        </div>
 
         {error && (
           <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200 text-sm flex items-center gap-2">
@@ -261,7 +345,7 @@ const LoginPage = ({ onLogin }) => {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="glass-input w-full pl-10 pr-4 py-3 rounded-lg text-sm md:text-base"
+                className="glass-input w-full pl-10 pr-4 py-3 rounded-lg text-sm md:text-base anim-cine-text"
                 placeholder="Ketik nama Anda..."
                 required
               />
@@ -277,18 +361,23 @@ const LoginPage = ({ onLogin }) => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="glass-input w-full pl-10 pr-4 py-3 rounded-lg text-sm md:text-base"
+                className="glass-input w-full pl-10 pr-4 py-3 rounded-lg text-sm md:text-base anim-cine-text"
                 placeholder="••••••••"
                 required
               />
             </div>
           </div>
+          
+          {/* TOMBOL LOGIN TITANIUM CINEMATIC 2026 */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 mt-6 rounded-lg font-black tracking-widest uppercase bg-gradient-to-r from-cyan-600 to-cyan-400 text-[#050A15] hover:from-cyan-400 hover:to-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.4)] border border-cyan-300/50 transition-all duration-300 text-sm md:text-base"
+            className="w-full bg-gradient-to-b from-[#1e293b] to-[#0f172a] text-white font-bold text-xs md:text-sm tracking-[0.2em] py-3.5 rounded-lg border border-[#334155] border-t-[#94a3b8] shadow-[0_10px_20px_rgba(0,0,0,0.6)] hover:from-[#334155] hover:to-[#1e293b] hover:border-t-white transition-all duration-300 uppercase mt-4 anim-cine-btn relative overflow-hidden group disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {loading ? "Memverifikasi..." : "MASUK"}
+            <span className="relative z-10">{loading ? "MEMVERIFIKASI..." : "MASUK KE SISTEM"}</span>
+            
+            {/* Efek kilatan cahaya tipis saat di-hover */}
+            <div className="absolute top-0 -left-[100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 group-hover:left-[200%] transition-all duration-700 ease-out"></div>
           </button>
         </form>
       </div>
@@ -396,12 +485,12 @@ const CertificateModal = ({ isOpen, onClose, onSave, certData, crewId }) => {
       !formData.name ||
       !formData.number ||
       !formData.issueDate ||
-      !formData.expiryDate
+      (!formData.expiryDate && formData.expiryDate !== "Unlimited")
     ) {
       setError("Semua kolom wajib diisi.");
       return;
     }
-    if (new Date(formData.expiryDate) <= new Date(formData.issueDate)) {
+    if (formData.expiryDate !== "Unlimited" && new Date(formData.expiryDate) <= new Date(formData.issueDate)) {
       setError("Tanggal Expired harus lebih besar dari Tanggal Terbit.");
       return;
     }
@@ -487,18 +576,28 @@ const CertificateModal = ({ isOpen, onClose, onSave, certData, crewId }) => {
                 className="glass-input w-full p-2.5 rounded-lg text-sm [color-scheme:dark]"
               />
             </div>
-            <div>
-              <label className="block text-xs text-gray-400 mb-1">
+            <div className="flex flex-col gap-1 w-full">
+              <label className="block text-xs text-gray-400 mb-0">
                 Tanggal Expired
               </label>
               <input
                 type="date"
-                value={formData.expiryDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, expiryDate: e.target.value })
-                }
-                className="glass-input w-full p-2.5 rounded-lg text-sm [color-scheme:dark]"
+                value={formData.expiryDate === "Unlimited" ? "" : formData.expiryDate}
+                onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
+                disabled={formData.expiryDate === "Unlimited"}
+                className="glass-input w-full p-2.5 rounded-lg text-sm [color-scheme:dark] disabled:opacity-30 disabled:cursor-not-allowed"
               />
+              <label className="flex items-center gap-2 mt-1 cursor-pointer group w-fit">
+                <input
+                  type="checkbox"
+                  checked={formData.expiryDate === "Unlimited"}
+                  onChange={(e) => setFormData({ ...formData, expiryDate: e.target.checked ? "Unlimited" : "" })}
+                  className="rounded border-gray-600 text-cyan-500 focus:ring-cyan-500/50 bg-[#1A1D24] cursor-pointer w-3.5 h-3.5"
+                />
+                <span className="text-[11px] text-gray-400 group-hover:text-cyan-400 transition-colors tracking-wide">
+                  Berlaku Seumur Hidup (Unlimited)
+                </span>
+              </label>
             </div>
           </div>
           <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-white/10">
@@ -573,6 +672,22 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
 
   // Fungsi untuk mendapatkan status kedaluwarsa dokumen
   const getExpiryStatus = (expiryDateStr) => {
+    if (expiryDateStr === "Unlimited" || expiryDateStr === "" || !expiryDateStr) {
+      return { 
+        label: "VALID", 
+        days: Infinity, 
+        class: "border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.1)] bg-green-950/20", 
+        textClass: "text-emerald-400",
+        icon: <Icon name="CheckCircle" size={16} className="text-emerald-400" />,
+        prog: 100,
+        color: "text-emerald-400",
+        bg: "bg-emerald-500/10",
+        bar: "bg-emerald-400",
+        action: "SEUMUR HIDUP",
+        message: "SERTIFIKAT BERLAKU SEUMUR HIDUP (UNLIMITED)"
+      };
+    }
+
     const expDate = new Date(expiryDateStr);
     const todayDate = new Date();
     const diffDays = Math.ceil((expDate - todayDate) / (1000 * 60 * 60 * 24));
@@ -1383,16 +1498,21 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                 let statusClass = "bg-gradient-to-b from-emerald-400 to-emerald-600 shadow-[2px_0_8px_rgba(16,185,129,0.25)]";
 
                 const hasExpired = crewDocs.some(c => {
+                  if (c.expiryDate === "Unlimited" || !c.expiryDate) return false;
                   const diffDays = Math.ceil((new Date(c.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
                   return diffDays <= 0;
                 });
                 const hasCritical = crewDocs.some(c => {
+                  if (c.expiryDate === "Unlimited" || !c.expiryDate) return false;
                   const diffDays = Math.ceil((new Date(c.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
                   return diffDays > 0 && diffDays <= 30;
                 });
 
                 if (hasExpired) statusClass = "bg-gradient-to-b from-rose-500 to-rose-700 shadow-[2px_0_8px_rgba(225,29,72,0.25)]";
                 else if (hasCritical) statusClass = "bg-gradient-to-b from-amber-400 to-amber-600 shadow-[2px_0_8px_rgba(245,158,11,0.25)]";
+
+                // CEK APAKAH KARTU INI SEDANG AKTIF
+                const isActive = currentView === "crew" && selectedCrewId === crew.id;
 
                 return (
                   <div
@@ -1401,33 +1521,53 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                       setSelectedCrewId(crew.id);
                       setCurrentView("crew");
                     }}
-                    className={`scroll-fx-2026 relative bg-gradient-to-br from-[#1B1E24] to-[#101216] border border-[#272B34] rounded-lg p-3 mb-3 flex items-center justify-between group/crew cursor-pointer overflow-hidden shadow-[0_4px_10px_rgba(0,0,0,0.4)] hover:border-[#3A404D] hover:-translate-y-0.5 transition-all duration-300 ${
-                      currentView === "crew" && selectedCrewId === crew.id ? "ring-1 ring-white/10 shadow-[0_0_15px_rgba(0,240,255,0.05)] bg-gradient-to-br from-[#1F2329] to-[#15181D]" : ""
-                    }`}
+                    className={`scroll-fx-2026 relative rounded-lg p-3 mb-3 flex items-center justify-between group/crew cursor-pointer overflow-hidden transition-all duration-500 ease-out
+                      ${isActive 
+                        ? 'translate-x-2 scale-[1.02] bg-gradient-to-br from-[#282D38] to-[#1A1D24] border border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.08)] z-10' 
+                        : 'bg-gradient-to-br from-[#1B1E24] to-[#101216] border border-[#272B34] shadow-[0_4px_10px_rgba(0,0,0,0.4)] hover:border-[#3A404D] hover:-translate-y-0.5'
+                      }
+                    `}
                   >
                     {/* 2026 LED Status Line Indicator */}
                     <div className={`absolute left-0 top-0 bottom-0 w-[4px] ${statusClass}`}></div>
 
                     <div className="flex items-center gap-3 pl-1 flex-1 truncate">
-                      {/* Avatar - Hardware Cutout Effect (Efek tenggelam ke dalam) */}
-                      <div className="w-9 h-9 rounded-md bg-[#0B0D10] text-[#E2E8F0] flex items-center justify-center font-bold text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] border border-[#242830] flex-shrink-0">
+                      {/* Avatar (Pop-out jika aktif, Inset jika tidak) */}
+                      <div className={`w-9 h-9 rounded-md flex items-center justify-center font-bold text-sm border transition-all duration-500 flex-shrink-0
+                        ${isActive 
+                          ? 'bg-[#151820] text-white border-white/40 shadow-[0_0_10px_rgba(255,255,255,0.2)] scale-110' 
+                          : 'bg-[#0B0D10] text-[#E2E8F0] shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] border-[#242830]'
+                        }`}
+                      >
                         {crew.name.charAt(0).toUpperCase()}
                       </div>
                       
                       {/* Teks Nama & Pangkat */}
                       <div className="flex flex-col truncate">
-                        <h3 className={`text-[#F1F5F9] font-bold text-[13px] uppercase tracking-wide group-hover/crew:text-cyan-300 transition-colors drop-shadow-md truncate ${currentView === "crew" && selectedCrewId === crew.id ? "text-cyan-400" : ""}`}>
-                          {crew.name}
+                        <h3 className={`font-bold text-[13px] uppercase tracking-wide transition-colors duration-300 flex items-center gap-2 truncate
+                          ${isActive ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]' : 'text-[#F1F5F9] group-hover/crew:text-white drop-shadow-md'}
+                        `}>
+                          <span className="truncate">{crew.name}</span>
+                          
+                          {/* Indikator Denyut Holografik jika Aktif */}
+                          {isActive && (
+                            <span className="flex w-1.5 h-1.5 relative ml-1 flex-shrink-0">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
+                            </span>
+                          )}
                         </h3>
-                        <p className="text-[#64748B] text-[11px] mt-0.5 uppercase tracking-wider font-medium truncate">
+                        <p className={`text-[11px] mt-0.5 uppercase tracking-wider font-medium transition-colors truncate
+                          ${isActive ? 'text-[#94A3B8]' : 'text-[#64748B]'}
+                        `}>
                           {crew.rank}
                         </p>
                       </div>
                     </div>
 
-                    {/* Area Tombol Aksi (Edit/Delete) */}
+                    {/* Area Tombol Aksi (Edit/Delete) - Redup jika tidak aktif agar fokus */}
                     {isPip && (
-                      <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover/crew:opacity-100 transition-opacity pl-2 flex-shrink-0 relative z-10">
+                      <div className={`flex items-center gap-1 transition-opacity duration-300 pl-2 flex-shrink-0 relative z-10 ${isActive ? 'opacity-100' : 'opacity-20 group-hover/crew:opacity-100'}`}>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleMoveCrew(index, -1); }}
                           disabled={index === 0}
@@ -1645,28 +1785,120 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
             <>
               {selectedCrew &&
                 (expiredCertsCount > 0 || criticalCertsCount > 0) && (
-                  <div className="mb-4 md:mb-6 p-3 md:p-4 rounded-xl border flex items-center gap-3 md:gap-4 bg-red-900/20 border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.15)] blink-red animate-pulse relative z-20">
-                    <div className="p-2 md:p-3 bg-red-500/20 rounded-full flex-shrink-0">
-                      <Icon name="Bell" size={20} className="text-red-400 md:w-6 md:h-6" />
-                    </div>
-                    <div>
-                      <h4 className="text-red-400 font-bold text-xs md:text-sm tracking-wider uppercase">
-                        Peringatan Sistem Dokumen
-                      </h4>
-                      <p className="text-gray-300 text-[10px] md:text-sm mt-0.5 leading-tight md:leading-normal">
-                        Kru ini memiliki{" "}
-                        <span className="font-bold text-white">
-                          {expiredCertsCount} dokumen mati
-                        </span>{" "}
-                        dan{" "}
-                        <span className="font-bold text-white">
-                          {criticalCertsCount} dokumen kritis (&le; 30 Hari)
+                  <>
+                    {/* ENGINE ANIMASI HUD 2026 */}
+                    <style>{`
+                      @keyframes hud-scan {
+                        0% { left: -10%; opacity: 0; }
+                        10% { opacity: 1; }
+                        90% { opacity: 1; }
+                        100% { left: 100%; opacity: 0; }
+                      }
+                      .animate-laser-scan {
+                        position: absolute;
+                        top: -1px;
+                        width: 20%;
+                        height: 3px;
+                        background: #ffffff;
+                        box-shadow: 0 0 15px 4px #f43f5e;
+                        border-radius: 50%;
+                        animation: hud-scan 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+                      }
+                      @keyframes hud-pulse {
+                        0%, 100% { text-shadow: 0 0 10px rgba(244, 63, 94, 0.2); }
+                        50% { text-shadow: 0 0 25px rgba(244, 63, 94, 0.8); }
+                      }
+                      .text-hud-glow {
+                        animation: hud-pulse 2.5s ease-in-out infinite;
+                      }
+                    `}</style>
+
+                    {/* ZENITH FLOATING HUD - Peringatan Dokumen */}
+                    <div className="w-full mb-8 pt-4 px-2 relative z-20">
+                      
+                      {/* Header HUD */}
+                      <div className="flex justify-between items-end mb-2">
+                        <h4 className="text-rose-500 font-light text-xl md:text-2xl tracking-[0.25em] uppercase m-0 leading-none drop-shadow-[0_0_8px_rgba(225,29,72,0.3)]">
+                          SYSTEM <b className="font-black">ALERT</b>
+                        </h4>
+                        <span className="text-rose-400/80 text-[10px] md:text-xs tracking-widest uppercase font-bold animate-pulse">
+                          Radar Active
                         </span>
-                        . Segera periksa!
-                      </p>
+                      </div>
+
+                      {/* Garis Laser dengan Efek Cahaya Berjalan (Scanning) */}
+                      <div className="relative h-[2px] w-full bg-gradient-to-r from-rose-500 via-rose-500/20 to-transparent overflow-hidden mb-5">
+                        <div className="animate-laser-scan"></div>
+                      </div>
+
+                      {/* Data HUD Raksasa (Floating Numbers) */}
+                      <div className="flex flex-row gap-10 md:gap-20">
+                        
+                        {/* Kolom Dokumen Mati */}
+                        <div className="flex flex-col">
+                          <span className="text-slate-400 text-[10px] md:text-xs uppercase tracking-[0.2em] mb-1.5 font-medium">
+                            Dokumen Expired
+                          </span>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-5xl md:text-6xl font-black text-rose-500 text-hud-glow leading-none">
+                              {expiredCertsCount}
+                            </span>
+                            <span className="text-slate-500 text-xs tracking-widest uppercase font-bold">Docs</span>
+                          </div>
+                        </div>
+
+                        {/* Kolom Dokumen Kritis */}
+                        <div className="flex flex-col">
+                          <span className="text-slate-400 text-[10px] md:text-xs uppercase tracking-[0.2em] mb-1.5 font-medium">
+                            Dokumen Kritis (&le; 30 Hari)
+                          </span>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-5xl md:text-6xl font-black text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.6)] leading-none">
+                              {criticalCertsCount}
+                            </span>
+                            <span className="text-slate-500 text-xs tracking-widest uppercase font-bold">Docs</span>
+                          </div>
+                        </div>
+
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
+                
+              {/* ENGINE ANIMASI GRID 2026 - HOLOGRAPHIC SPATIAL */}
+              <style>{`
+                @supports (animation-timeline: view()) {
+                  @keyframes holographic-grid {
+                    0% { 
+                      opacity: 0; 
+                      transform: perspective(1000px) rotateX(-15deg) translateY(60px) scale(0.85); 
+                      filter: blur(10px); 
+                    }
+                    15% { 
+                      opacity: 1; 
+                      transform: perspective(1000px) rotateX(0deg) translateY(0) scale(1); 
+                      filter: blur(0px); 
+                    }
+                    85% { 
+                      opacity: 1; 
+                      transform: perspective(1000px) rotateX(0deg) translateY(0) scale(1); 
+                      filter: blur(0px); 
+                    }
+                    100% { 
+                      opacity: 0; 
+                      transform: perspective(1000px) rotateX(15deg) translateY(-60px) scale(0.85); 
+                      filter: blur(10px); 
+                    }
+                  }
+                  .scroll-grid-2026 {
+                    animation: holographic-grid linear both;
+                    animation-timeline: view();
+                    animation-range: cover 0% cover 100%;
+                    will-change: transform, opacity, filter;
+                  }
+                }
+              `}</style>
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 animate-fadeIn relative z-20">
                 {sortedCrewCerts.map((cert, index) => {
                   const status = getExpiryStatus(cert.expiryDate);
@@ -1674,7 +1906,7 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                   return (
                     <div
                       key={cert.id}
-                      className={`glass-panel rounded-xl p-4 md:p-5 border relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${status.class}`}
+                      className={`scroll-grid-2026 glass-panel rounded-xl p-4 md:p-5 border relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${status.class}`}
                     >
                       {isExpired && (
                         <div className="absolute top-1/2 left-0 w-full h-0.5 bg-red-600/50 transform -translate-y-1/2 -rotate-12 pointer-events-none z-20"></div>
@@ -1755,18 +1987,12 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                             {cert.issueDate}
                           </span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500 text-[10px] md:text-xs">
-                            Kedaluwarsa
+                        <p className="text-[10px] sm:text-xs text-gray-400 mt-1 flex justify-between">
+                          <span>Kedaluwarsa</span>
+                          <span className={`ml-2 font-mono font-bold ${isExpired && cert.expiryDate !== "Unlimited" ? "text-red-500" : "text-gray-200"}`}>
+                            {cert.expiryDate === "Unlimited" ? "SEUMUR HIDUP" : cert.expiryDate}
                           </span>
-                          <span
-                            className={`${
-                              isExpired ? "text-red-500" : "text-gray-300"
-                            } font-mono text-[10px] md:text-xs font-bold`}
-                          >
-                            {cert.expiryDate}
-                          </span>
-                        </div>
+                        </p>
                       </div>
 
                       {/* AREA TEKS BERJALAN (POSISI BARU) */}
@@ -1800,11 +2026,11 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
 
                           <div className="flex flex-col items-end flex-shrink-0">
                             <span
-                              className={`text-xs md:text-sm font-mono font-bold tracking-wider ${
-                                isExpired ? "text-red-500" : "text-white"
+                              className={`text-xs md:text-sm font-mono font-bold tracking-wider drop-shadow-md ${
+                                status.textClass || (isExpired ? "text-red-500" : "text-white")
                               }`}
                             >
-                              {isExpired ? "0 HARI" : `${status.days} HARI`}
+                              {cert.expiryDate === "Unlimited" ? "UNLIMITED" : (isExpired ? "0 HARI" : `${status.days} HARI`)}
                             </span>
                             <span
                               className={`text-[8px] md:text-[9px] uppercase tracking-widest font-bold ${status.color} opacity-80 md:mt-0.5`}
