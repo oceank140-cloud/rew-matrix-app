@@ -832,7 +832,8 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
       unsubCerts();
     };
   }, [fbUser]);
- useEffect(() => {
+  
+  useEffect(() => {
     // Only auto-select a crew if we are currently viewing "crew" layout but none is selected
     if (currentView === "crew" && !selectedCrewId && crews.length > 0) {
       setSelectedCrewId(crews[0].id);
@@ -847,6 +848,43 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
     return orderA - orderB;
   });
   const isPip = userRole === "pip";
+
+  // ENGINE PENGHITUNG TOTAL SERTIFIKAT INTI (NON-MCU & NON-PELAUT)
+  const totalSertifikatInti = sortedCrewCerts.filter(cert => {
+    if (!cert.name) return false;
+    const namaDokumen = cert.name.toLowerCase();
+    
+    // Deteksi dokumen yang harus diabaikan
+    const isMCU = namaDokumen.includes("mcu") || namaDokumen.includes("medical");
+    const isBukuPelaut = namaDokumen.includes("seaman") || namaDokumen.includes("pelaut");
+    
+    // Loloskan jika BUKAN MCU dan BUKAN Pelaut
+    return !isMCU && !isBukuPelaut;
+  }).length;
+
+  // ENGINE PENYARING SERTIFIKAT BERDASARKAN FILTER SIDEBAR
+  const displayCerts = sortedCrewCerts.filter(cert => {
+    // 1. Jika tab "Semua" aktif, loloskan semua sertifikat
+    if (filterStatus === "all") return true;
+
+    // 2. Kalkulasi sisa hari untuk sertifikat yang sedang di-looping
+    let diffDays = Infinity;
+    if (cert.expiryDate && cert.expiryDate !== "Unlimited") {
+      diffDays = Math.ceil((new Date(cert.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
+    }
+
+    // 3. Jika tab "Expired" aktif, hanya loloskan dokumen mati
+    if (filterStatus === "expired") {
+      return diffDays <= 0;
+    }
+
+    // 4. Jika tab "Kritis" aktif, hanya loloskan dokumen kritis (1 - 30 Hari)
+    if (filterStatus === "critical") {
+      return diffDays > 0 && diffDays <= 30;
+    }
+
+    return true;
+  });
 
   const handleSaveCrew = async (e) => {
     e.preventDefault();
@@ -947,13 +985,21 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
   };
   const globalStats = getGlobalStats();
 
-  const expiredCertsCount = crewCerts.filter(
-    (c) => getExpiryStatus(c.expiryDate).days <= 0
-  ).length;
-  const criticalCertsCount = crewCerts.filter((c) => {
-    const d = getExpiryStatus(c.expiryDate).days;
-    return d > 0 && d <= 30;
+  // ENGINE PENGHITUNG DOKUMEN MATI & KRITIS OTOMATIS
+  const expiredDocsCount = sortedCrewCerts.filter(cert => {
+    if (!cert.expiryDate || cert.expiryDate === "Unlimited") return false;
+    const diffDays = Math.ceil((new Date(cert.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
+    return diffDays <= 0;
   }).length;
+
+  const criticalDocsCount = sortedCrewCerts.filter(cert => {
+    if (!cert.expiryDate || cert.expiryDate === "Unlimited") return false;
+    const diffDays = Math.ceil((new Date(cert.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
+    return diffDays > 0 && diffDays <= 30;
+  }).length;
+
+  // Variabel penentu mode Radar (Merah vs Cyan)
+  const isSystemAlertActive = expiredDocsCount > 0 || criticalDocsCount > 0;
 
   const handleSaveCert = async (cert) => {
     if (!fbUser) return;
@@ -1158,8 +1204,7 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                   <span className="font-bold text-white text-lg w-8 text-right">{valid}</span>
                 </div>
               </div>
-              
-              <div className="flex items-center justify-between p-3.5 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+<div className="flex items-center justify-between p-3.5 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
                 <div className="flex items-center gap-3">
                   <div className="w-3 h-3 rounded-full bg-yellow-400 shadow-[0_0_8px_#facc15]"></div>
                   <span className="text-sm font-semibold text-yellow-100">Status Kritis (1 - 30 Hari)</span>
@@ -1293,6 +1338,18 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
       {/* Overriding the neon-cyan CSS variable dynamically globally */}
       <style>{`:root { --neon-cyan: ${theme.hex}; }`}</style>
       
+      {/* ENGINE ANIMASI HEADER PILL 2026 */}
+      <style>{`
+        @keyframes pill-enter-2026 {
+          0% { opacity: 0; transform: translateX(30px) scale(0.9); filter: blur(4px); }
+          100% { opacity: 1; transform: translateX(0) scale(1); filter: blur(0px); }
+        }
+        .animate-pill-enter {
+          /* Animasi berjalan selama 0.8 detik, dengan delay 0.4 detik agar tidak bertabrakan dengan animasi judul */
+          animation: pill-enter-2026 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.4s both;
+        }
+      `}</style>
+
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
@@ -1308,31 +1365,48 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
       >
         <div className="w-80 h-full flex flex-col">
           <div className="p-4 md:p-6 border-b border-white/5 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-3 overflow-hidden group cursor-default">
-              {/* Ikon Box Logo Dinamis */}
-              <div className={`relative flex items-center justify-center w-10 h-10 flex-shrink-0 bg-[#0A1128] ${theme.bgLight} border ${theme.borderSoft} rounded-xl ${theme.glow} group-hover:shadow-lg transition-all duration-300 overflow-hidden`}>
-                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <Icon
-                  name="Ship"
-                  size={20} 
-                  className={`${theme.main} relative z-10 transform group-hover:scale-110 transition-transform duration-300`} 
-                  strokeWidth={1.5}
-                  style={{ filter: `drop-shadow(0 0 5px ${theme.hex}cc)` }}
-                />
-              </div>
+            {/* HEADER SIDEBAR - CINEMATIC ORBITAL DROP 2026 (ULTRA-MINIMALIST) */}
+            <div className="flex items-center justify-center overflow-hidden relative py-1 md:py-2">
               
-              {/* Teks Logo Dinamis */}
-              <div className="overflow-hidden flex-1">
-                <h1 
-                  className="text-sm font-black text-transparent bg-clip-text tracking-widest uppercase truncate drop-shadow-[0_0_8px_rgba(0,0,0,0.3)]"
-                  style={{ backgroundImage: `linear-gradient(to right, ${theme.hex}, #60a5fa)` }}
-                >
-                  CREW MATRIX
+              {/* ENGINE ANIMASI CINEMATIC DESCENT */}
+              <style>{`
+                /* Efek turun pelan dari atas ke bawah sambil nge-zoom dari besar ke normal */
+                @keyframes descendZoom {
+                  0% { 
+                    opacity: 0; 
+                    transform: translateY(-30px) scale(1.15); 
+                    filter: blur(8px); 
+                  }
+                  30% {
+                    opacity: 0.8;
+                    filter: blur(2px);
+                  }
+                  100% { 
+                    opacity: 1; 
+                    transform: translateY(0) scale(1); 
+                    filter: blur(0); 
+                  }
+                }
+                
+                .anim-descend-zoom { 
+                  /* Animasi elegan lambat di akhir selama 2.5 detik */
+                  animation: descendZoom 2.5s cubic-bezier(0.05, 0.9, 0.1, 1) forwards; 
+                }
+              `}</style>
+
+              {/* LOGO AREA (TANPA SUBTITLE) */}
+              <div className="anim-descend-zoom flex items-center justify-center">
+                
+                {/* Teks Utama: Perpaduan Light dan Black seperti System Alert */}
+                <h1 className="font-light text-xl md:text-2xl tracking-[0.25em] uppercase m-0 leading-none text-white drop-shadow-lg flex items-center">
+                  CREW 
+                  <b className="font-black text-white ml-2 md:ml-2.5 drop-shadow-[0_0_12px_rgba(255,255,255,0.4)]">
+                    MATRIX
+                  </b>
                 </h1>
-                <p className="text-[9px] mt-0.5 uppercase tracking-[0.2em] font-semibold truncate" style={{ color: theme.hex, opacity: 0.7 }}>
-                  Enterprise Edition
-                </p>
+                
               </div>
+
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -1352,91 +1426,85 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
           </div>
           
           <div className="p-4 flex-1 overflow-hidden flex flex-col">
-            <p className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider pl-2">
-              Main Menu
-            </p>
-            
-            <div className="space-y-2 overflow-y-auto flex-1 pr-2 pb-4">
-              {/* Tombol Home / Overview */}
-              <div
-                onClick={() => {
-                  setCurrentView("overview");
-                  setSelectedCrewId(null);
-                }}
-                className={`w-full group/crew relative rounded-xl transition-all duration-300 overflow-hidden border cursor-pointer ${
-                  currentView === "overview"
-                    ? `bg-black/20 ${theme.borderSoft} ${theme.glow}`
-                    : "bg-[#fefce8]/5 border-transparent hover:bg-white/10"
-                }`}
-              >
-                <div className="flex items-center gap-3 p-3 md:p-3.5">
-                  <div
-                    className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold text-xs md:text-sm ${
+            <div className="overflow-y-auto flex-1 pr-2 pb-4">
+              
+              {/* MAIN MENU - SIDE-BY-SIDE WIDGET (2026 STYLE) */}
+              <div className="mb-8 px-1">
+                {/* Judul Section */}
+                <p className="text-[8px] text-[#475569] font-bold tracking-[0.3em] uppercase mb-4 ml-1">
+                  Main Menu
+                </p>
+                
+                {/* Container Grid 2 Kolom Berdampingan */}
+                <div className="grid grid-cols-2 gap-3">
+                  
+                  {/* BUTTON 1: OVERVIEW DASHBOARD */}
+                  <button
+                    onClick={() => {
+                      setCurrentView("overview");
+                      setSelectedCrewId(null);
+                    }}
+                    className={`relative flex flex-col items-start p-3.5 border rounded-xl active:scale-105 transition-all duration-300 group cursor-pointer text-left overflow-hidden ${
                       currentView === "overview"
-                        ? `${theme.bgLight} ${theme.main} ${theme.glow}`
-                        : "bg-white/10 text-gray-400"
+                        ? `bg-gradient-to-br ${theme.bgLight} to-transparent ${theme.borderSoft}`
+                        : "bg-[#0a0d14] border-white/5 hover:border-white/20 hover:bg-white/[0.02] hover:shadow-[0_0_15px_rgba(255,255,255,0.02)]"
                     }`}
+                    style={currentView === "overview" ? { boxShadow: `inset 0 1px 0 rgba(255,255,255,0.1), 0 0 15px ${theme.hex}25` } : {}}
                   >
-                    <Icon name="Home" size={18} />
-                  </div>
-                  <div className="flex-1 truncate">
-                    <h3
-                      className={`font-semibold text-xs md:text-sm truncate ${
-                        currentView === "overview"
-                          ? theme.main
-                          : "text-gray-300"
-                      }`}
-                    >
-                      Overview Dashboard
-                    </h3>
-                    <p className="text-[10px] md:text-[11px] text-gray-500 truncate mt-0.5">
-                      Ringkasan Status Global
-                    </p>
-                  </div>
-                </div>
-              </div>
+                    {/* Icon Wrapper */}
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 transition-colors duration-300 ${
+                      currentView === "overview" ? `${theme.bgLight} ${theme.main}` : "bg-white/5 text-[#64748b] group-hover:text-white"
+                    }`}>
+                      <Icon name="Home" size={16} />
+                    </div>
+                    
+                    {/* Text Compact */}
+                    <span className={`text-[9.5px] font-black uppercase tracking-widest mb-1 transition-colors duration-300 ${
+                      currentView === "overview" ? theme.main : "text-gray-400 group-hover:text-white"
+                    }`} style={currentView === "overview" ? { filter: `drop-shadow(0 0 5px ${theme.hex}80)` } : {}}>
+                      Overview
+                    </span>
+                    <span className="text-[#64748b] text-[6.5px] font-mono uppercase tracking-[0.2em] leading-tight">
+                      Global_Status
+                    </span>
+                  </button>
 
-              {/* Tombol Matrix View */}
-              <div
-                onClick={() => {
-                  setCurrentView("matrix");
-                  setSelectedCrewId(null);
-                }}
-                className={`w-full group/crew relative rounded-xl transition-all duration-300 overflow-hidden border mb-4 cursor-pointer ${
-                  currentView === "matrix"
-                    ? `bg-black/20 ${theme.borderSoft} ${theme.glow}`
-                    : "bg-[#fefce8]/5 border-transparent hover:bg-white/10"
-                }`}
-              >
-                <div className="flex items-center gap-3 p-3 md:p-3.5">
-                  <div
-                    className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold text-xs md:text-sm ${
+                  {/* BUTTON 2: MATRIX VIEW */}
+                  <button
+                    onClick={() => {
+                      setCurrentView("matrix");
+                      setSelectedCrewId(null);
+                    }}
+                    className={`relative flex flex-col items-start p-3.5 border rounded-xl active:scale-105 transition-all duration-300 group cursor-pointer text-left overflow-hidden ${
                       currentView === "matrix"
-                        ? `${theme.bgLight} ${theme.main} ${theme.glow}`
-                        : "bg-white/10 text-gray-400"
+                        ? `bg-gradient-to-br ${theme.bgLight} to-transparent ${theme.borderSoft}`
+                        : "bg-[#0a0d14] border-white/5 hover:border-white/20 hover:bg-white/[0.02] hover:shadow-[0_0_15px_rgba(255,255,255,0.02)]"
                     }`}
+                    style={currentView === "matrix" ? { boxShadow: `inset 0 1px 0 rgba(255,255,255,0.1), 0 0 15px ${theme.hex}25` } : {}}
                   >
-                    <Icon name="Grid" size={18} />
-                  </div>
-                  <div className="flex-1 truncate">
-                    <h3
-                      className={`font-semibold text-xs md:text-sm truncate ${
-                        currentView === "matrix"
-                          ? theme.main
-                          : "text-gray-300"
-                      }`}
-                    >
-                      Matrix View
-                    </h3>
-                    <p className="text-[10px] md:text-[11px] text-gray-500 truncate mt-0.5">
-                      Tabel Grid Data Lengkap
-                    </p>
-                  </div>
+                    {/* Icon Wrapper */}
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 transition-colors duration-300 ${
+                      currentView === "matrix" ? `${theme.bgLight} ${theme.main}` : "bg-white/5 text-[#64748b] group-hover:text-white"
+                    }`}>
+                      <Icon name="Grid" size={16} />
+                    </div>
+                    
+                    {/* Text Compact */}
+                    <span className={`text-[9.5px] font-black uppercase tracking-widest mb-1 transition-colors duration-300 ${
+                      currentView === "matrix" ? theme.main : "text-gray-400 group-hover:text-white"
+                    }`} style={currentView === "matrix" ? { filter: `drop-shadow(0 0 5px ${theme.hex}80)` } : {}}>
+                      Matrix
+                    </span>
+                    <span className="text-[#64748b] text-[6.5px] font-mono uppercase tracking-[0.2em] leading-tight">
+                      Full_Grid
+                    </span>
+                  </button>
+
                 </div>
               </div>
 
-              <div className="border-t border-white/5 pt-3 mb-2">
-                <p className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider pl-2">
+              <div className="border-t border-white/5 pt-3 mb-2 px-1">
+                <p className="text-[8px] text-[#475569] font-bold tracking-[0.3em] uppercase mb-4 ml-1">
                   Active Crews
                 </p>
                 {/* Search & Sort Panel */}
@@ -1493,9 +1561,9 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
               `}</style>
 
               {filteredCrews.map((crew, index) => {
-                // Hitung status dokumen untuk efek LED Bar 2026
+                // Hitung status dokumen untuk efek dot indicator 2026
                 const crewDocs = certificates.filter(c => c.crewId === crew.id);
-                let statusClass = "bg-gradient-to-b from-emerald-400 to-emerald-600 shadow-[2px_0_8px_rgba(16,185,129,0.25)]";
+                let dotColor = "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]";
 
                 const hasExpired = crewDocs.some(c => {
                   if (c.expiryDate === "Unlimited" || !c.expiryDate) return false;
@@ -1508,10 +1576,10 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                   return diffDays > 0 && diffDays <= 30;
                 });
 
-                if (hasExpired) statusClass = "bg-gradient-to-b from-rose-500 to-rose-700 shadow-[2px_0_8px_rgba(225,29,72,0.25)]";
-                else if (hasCritical) statusClass = "bg-gradient-to-b from-amber-400 to-amber-600 shadow-[2px_0_8px_rgba(245,158,11,0.25)]";
+                if (hasExpired) dotColor = "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]";
+                else if (hasCritical) dotColor = "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]";
 
-                // CEK APAKAH KARTU INI SEDANG AKTIF
+                // CEK APAKAH BARIS INI SEDANG AKTIF
                 const isActive = currentView === "crew" && selectedCrewId === crew.id;
 
                 return (
@@ -1521,57 +1589,47 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                       setSelectedCrewId(crew.id);
                       setCurrentView("crew");
                     }}
-                    className={`scroll-fx-2026 relative rounded-lg p-3 mb-3 flex items-center justify-between group/crew cursor-pointer overflow-hidden transition-all duration-500 ease-out
+                    className={`scroll-fx-2026 relative p-1.5 mb-2 flex items-center justify-between group/crew cursor-pointer transition-all duration-300 ease-out rounded-full border border-transparent
                       ${isActive 
-                        ? 'translate-x-2 scale-[1.02] bg-gradient-to-br from-[#282D38] to-[#1A1D24] border border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.08)] z-10' 
-                        : 'bg-gradient-to-br from-[#1B1E24] to-[#101216] border border-[#272B34] shadow-[0_4px_10px_rgba(0,0,0,0.4)] hover:border-[#3A404D] hover:-translate-y-0.5'
+                        ? `bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)] border-white/10` 
+                        : `bg-white/5 hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]`
                       }
                     `}
                   >
-                    {/* 2026 LED Status Line Indicator */}
-                    <div className={`absolute left-0 top-0 bottom-0 w-[4px] ${statusClass}`}></div>
-
-                    <div className="flex items-center gap-3 pl-1 flex-1 truncate">
-                      {/* Avatar (Pop-out jika aktif, Inset jika tidak) */}
-                      <div className={`w-9 h-9 rounded-md flex items-center justify-center font-bold text-sm border transition-all duration-500 flex-shrink-0
-                        ${isActive 
-                          ? 'bg-[#151820] text-white border-white/40 shadow-[0_0_10px_rgba(255,255,255,0.2)] scale-110' 
-                          : 'bg-[#0B0D10] text-[#E2E8F0] shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] border-[#242830]'
-                        }`}
-                      >
+                    <div className="flex items-center flex-1 truncate">
+                      {/* Avatar: Cincin Neon Tipis */}
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 transition-all duration-300 border border-white/20 group-hover/crew:border-white/50 shadow-inner
+                        ${isActive ? `bg-white/20 text-white shadow-[0_0_10px_rgba(255,255,255,0.2)]` : `bg-[#0B0D10] text-[#E2E8F0]`}
+                      `}>
                         {crew.name.charAt(0).toUpperCase()}
                       </div>
                       
-                      {/* Teks Nama & Pangkat */}
-                      <div className="flex flex-col truncate">
-                        <h3 className={`font-bold text-[13px] uppercase tracking-wide transition-colors duration-300 flex items-center gap-2 truncate
-                          ${isActive ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]' : 'text-[#F1F5F9] group-hover/crew:text-white drop-shadow-md'}
-                        `}>
-                          <span className="truncate">{crew.name}</span>
-                          
-                          {/* Indikator Denyut Holografik jika Aktif */}
-                          {isActive && (
-                            <span className="flex w-1.5 h-1.5 relative ml-1 flex-shrink-0">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
-                            </span>
-                          )}
-                        </h3>
-                        <p className={`text-[11px] mt-0.5 uppercase tracking-wider font-medium transition-colors truncate
-                          ${isActive ? 'text-[#94A3B8]' : 'text-[#64748B]'}
-                        `}>
+                      {/* Tipografi 2026: Nama dan Pangkat */}
+                      <div className="flex flex-col ml-3 truncate flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className={`text-xs tracking-[0.15em] font-semibold uppercase truncate transition-colors duration-300
+                            ${isActive ? 'text-white' : 'text-[#e2e8f0] group-hover/crew:text-white'}
+                          `}>
+                            {crew.name}
+                          </h3>
+                          {/* Indikator Denyut Dot (Neon Pulse) */}
+                          <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 animate-pulse ${dotColor}`}></div>
+                        </div>
+                        <span className={`font-mono text-[9px] tracking-widest truncate ${theme.main}`}>
                           {crew.rank}
-                        </p>
+                        </span>
                       </div>
                     </div>
 
-                    {/* Area Tombol Aksi (Edit/Delete) - Redup jika tidak aktif agar fokus */}
+                    {/* Area Tombol Aksi (Memudar secara default) */}
                     {isPip && (
-                      <div className={`flex items-center gap-1 transition-opacity duration-300 pl-2 flex-shrink-0 relative z-10 ${isActive ? 'opacity-100' : 'opacity-20 group-hover/crew:opacity-100'}`}>
+                      <div className={`flex items-center gap-0.5 transition-opacity duration-300 flex-shrink-0 relative z-10 pr-2
+                        ${isActive ? 'opacity-100' : 'opacity-0 group-hover/crew:opacity-100'}
+                      `}>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleMoveCrew(index, -1); }}
                           disabled={index === 0}
-                          className={`p-1.5 md:p-1 transition-colors rounded ${index === 0 ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-white'}`}
+                          className={`p-1 transition-colors rounded-full ${index === 0 ? 'text-slate-700 cursor-not-allowed' : 'text-slate-500 hover:text-white hover:bg-white/10'}`}
                           title="Naikkan"
                         >
                           <Icon name="ChevronUp" size={13} />
@@ -1579,24 +1637,24 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                         <button
                           onClick={(e) => { e.stopPropagation(); handleMoveCrew(index, 1); }}
                           disabled={index === filteredCrews.length - 1}
-                          className={`p-1.5 md:p-1 transition-colors rounded ${index === filteredCrews.length - 1 ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-white'}`}
+                          className={`p-1 transition-colors rounded-full ${index === filteredCrews.length - 1 ? 'text-slate-700 cursor-not-allowed' : 'text-slate-500 hover:text-white hover:bg-white/10'}`}
                           title="Turunkan"
                         >
                           <Icon name="ChevronDown" size={13} />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleStartEditCrew(crew); }}
-                          className="p-1.5 md:p-1 text-slate-400 hover:text-cyan-400 transition-colors rounded"
+                          className={`p-1 text-slate-500 hover:${theme.main} hover:bg-white/10 transition-colors rounded-full`}
                           title="Edit"
                         >
-                          <Icon name="Edit2" size={13} />
+                          <Icon name="Edit2" size={12} />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleDeleteCrew(crew.id); }}
-                          className="p-1.5 md:p-1 text-slate-400 hover:text-red-400 transition-colors rounded"
+                          className="p-1 text-slate-500 hover:text-red-500 hover:bg-white/10 transition-colors rounded-full"
                           title="Hapus"
                         >
-                          <Icon name="Trash2" size={13} />
+                          <Icon name="Trash2" size={12} />
                         </button>
                       </div>
                     )}
@@ -1671,104 +1729,151 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
           }}
         />
 
-        <header className="glass-panel !border-x-0 !border-t-0 !rounded-none px-4 md:px-8 py-4 md:py-6 z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4 md:gap-0 border-b border-white/5 shadow-md relative">
-          <div className="flex items-start md:items-end gap-3 md:gap-5 w-full">
-            <button
+        <header className="glass-panel !border-x-0 !border-t-0 !rounded-none px-4 md:px-8 py-4 md:py-6 z-10 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-4 lg:gap-0 border-b border-white/5 shadow-md relative">
+          
+          {/* SISI KIRI HEADER - CINEMATIC BRACKET REVEAL 2026 */}
+          <div className="flex items-center gap-5 md:gap-7 w-full overflow-hidden">
+            
+            {/* TOMBOL HAMBURGER MINIMALIS */}
+            <button 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className={`mt-1 md:mb-1 p-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all ${theme.glow} flex-shrink-0 ${theme.main}`}
+              className={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl border border-white/10 bg-white/5 text-xl hover:bg-white/10 transition-all duration-300 backdrop-blur-sm z-10 relative ${theme.main}`}
+              style={{ boxShadow: `0 0 15px ${theme.hex}33` }}
             >
-              <Icon name="Menu" size={20} className="md:w-6 md:h-6" />
+              ≡
             </button>
-            <div className="flex-1 overflow-hidden">
-              <h2 className="text-xl md:text-3xl font-light text-white mb-1 md:mb-2 truncate">
-                {currentView === "overview" ? (
-                  <>Dashboard <span className={`font-bold ${theme.main}`}>Overview</span></>
-                ) : currentView === "matrix" ? (
-                  <>Real Crew <span className={`font-bold ${theme.main}`}>Matrix</span></>
-                ) : (
-                  <>
-                    Data Sertifikat:{" "}
-                    <span className={`font-bold ${theme.main}`}>
-                      {selectedCrew?.name || "Tidak ada data"}
-                    </span>
-                  </>
-                )}
-              </h2>
+
+            {/* AREA INFORMASI KRU - KOREOGRAFI SINEMATIK */}
+            <div className="flex flex-col justify-center overflow-hidden h-full flex-1">
               
-              {currentView === "overview" ? (
-                <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-400">
-                  <span className={`px-2 py-0.5 border rounded text-[10px] md:text-xs tracking-wider font-semibold ${theme.bgLight} ${theme.borderSoft} ${theme.main}`}>
-                    Ringkasan Status Global
-                  </span>
-                  <span className="px-2 py-0.5 bg-gray-500/10 border border-gray-500/20 text-gray-300 rounded text-[10px] md:text-xs tracking-wider font-semibold">
-                    Operator: <span className="text-white capitalize">{userName}</span>
-                  </span>
-                  {/* SWITCHER TEMA */}
-                  <div className="flex items-center gap-2 ml-2 pl-2 md:ml-4 md:pl-4 border-l border-gray-600 z-50 pointer-events-auto">
-                    <button onClick={() => setActiveTheme('cyan')} className={`w-3.5 h-3.5 rounded-full bg-cyan-400 ${activeTheme === 'cyan' ? 'ring-2 ring-offset-2 ring-offset-[#0A1128] ring-cyan-400' : 'opacity-50 hover:opacity-100'} transition-all`} title="Neon Cyan"></button>
-                    <button onClick={() => setActiveTheme('emerald')} className={`w-3.5 h-3.5 rounded-full bg-emerald-400 ${activeTheme === 'emerald' ? 'ring-2 ring-offset-2 ring-offset-[#0A1128] ring-emerald-400' : 'opacity-50 hover:opacity-100'} transition-all`} title="Radar Green"></button>
-                    <button onClick={() => setActiveTheme('amber')} className={`w-3.5 h-3.5 rounded-full bg-amber-400 ${activeTheme === 'amber' ? 'ring-2 ring-offset-2 ring-offset-[#0A1128] ring-amber-400' : 'opacity-50 hover:opacity-100'} transition-all`} title="Night Amber"></button>
-                  </div>
+              {/* ENGINE ANIMASI CINEMATIC 2026 */}
+              <style>{`
+                @keyframes breachLeft {
+                  0% { transform: translateX(50px); opacity: 0; }
+                  100% { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes breachRight {
+                  0% { transform: translateX(-50px); opacity: 0; }
+                  100% { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes targetLockFocus {
+                  0% { opacity: 0; filter: blur(20px); transform: scale(0.92); }
+                  25% { opacity: 0.9; filter: blur(2px); transform: scale(0.98); }
+                  100% { opacity: 1; filter: blur(0); transform: scale(1); }
+                }
+                @keyframes slideUpMetadata {
+                  0% { opacity: 0; transform: translateY(15px); }
+                  100% { opacity: 1; transform: translateY(0); }
+                }
+                .anim-bracket-l { animation: breachLeft 1.2s cubic-bezier(0.1, 1, 0.1, 1) forwards; }
+                .anim-bracket-r { animation: breachRight 1.2s cubic-bezier(0.1, 1, 0.1, 1) forwards; }
+                .anim-hero-text { animation: targetLockFocus 2.8s cubic-bezier(0.05, 0.95, 0.05, 1) 0.1s forwards; opacity: 0; }
+                .anim-metadata { animation: slideUpMetadata 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.6s forwards; opacity: 0; }
+              `}</style>
+
+              {/* BARIS ATAS: KOREOGRAFI BRACKET & NAMA KRU (GAYA SYSTEM ALERT) */}
+              <div className="flex items-center mt-1 relative w-full overflow-hidden">
+                {/* Kurung Kiri (Ukuran disesuaikan) */}
+                <span className="anim-bracket-l text-fuchsia-500 text-2xl md:text-3xl font-light mr-4 drop-shadow-[0_0_10px_rgba(217,70,239,0.5)]">[</span>
+                
+                {/* Teks Utama Mengadopsi Gaya "SYSTEM ALERT" */}
+                <div className="anim-hero-text flex items-center truncate">
+                  <h4 className="font-light text-lg md:text-xl tracking-[0.25em] uppercase m-0 leading-none text-[#64748b] truncate">
+                    {currentView === "overview" ? "DASHBOARD:" : currentView === "matrix" ? "REAL CREW:" : "DATA SERTIFIKAT:"} 
+                    <b className="font-black text-white ml-2 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+                      {currentView === "overview" ? "OVERVIEW" : currentView === "matrix" ? "MATRIX" : (selectedCrew?.name || "UNKNOWN")}
+                    </b>
+                  </h4>
                 </div>
-              ) : currentView === "matrix" ? (
-                <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-400">
-                  <span className={`px-2 py-0.5 border rounded text-[10px] md:text-xs tracking-wider font-semibold ${theme.bgLight} ${theme.borderSoft} ${theme.main}`}>
-                    Tabel Visualisasi Status
-                  </span>
-                  <span className="px-2 py-0.5 bg-gray-500/10 border border-gray-500/20 text-gray-300 rounded text-[10px] md:text-xs tracking-wider font-semibold">
-                    Operator: <span className="text-white capitalize">{userName}</span>
-                  </span>
-                  {/* SWITCHER TEMA */}
-                  <div className="flex items-center gap-2 ml-2 pl-2 md:ml-4 md:pl-4 border-l border-gray-600 z-50 pointer-events-auto">
-                    <button onClick={() => setActiveTheme('cyan')} className={`w-3.5 h-3.5 rounded-full bg-cyan-400 ${activeTheme === 'cyan' ? 'ring-2 ring-offset-2 ring-offset-[#0A1128] ring-cyan-400' : 'opacity-50 hover:opacity-100'} transition-all`} title="Neon Cyan"></button>
-                    <button onClick={() => setActiveTheme('emerald')} className={`w-3.5 h-3.5 rounded-full bg-emerald-400 ${activeTheme === 'emerald' ? 'ring-2 ring-offset-2 ring-offset-[#0A1128] ring-emerald-400' : 'opacity-50 hover:opacity-100'} transition-all`} title="Radar Green"></button>
-                    <button onClick={() => setActiveTheme('amber')} className={`w-3.5 h-3.5 rounded-full bg-amber-400 ${activeTheme === 'amber' ? 'ring-2 ring-offset-2 ring-offset-[#0A1128] ring-amber-400' : 'opacity-50 hover:opacity-100'} transition-all`} title="Night Amber"></button>
-                  </div>
-                </div>
-              ) : (
-                selectedCrew && (
-                  <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-400">
-                    <span className="flex items-center gap-1">
-                      <Icon name="User" size={12} className="md:w-3.5 md:h-3.5" />{" "}
-                      {selectedCrew.rank}
-                    </span>
-                    <span className="flex items-center gap-1 hidden sm:flex">
-                      <Icon name="Users" size={12} className="md:w-3.5 md:h-3.5" /> Status:{" "}
-                      {selectedCrew.status}
-                    </span>
-                    <span className={`px-2 py-0.5 border rounded text-[10px] md:text-xs tracking-wider font-semibold ${theme.bgLight} ${theme.borderSoft} ${theme.main}`}>
-                      Operator:{" "}
-                      <span className="text-white capitalize">{userName}</span>
-                    </span>
-                    {/* SWITCHER TEMA */}
-                    <div className="flex items-center gap-2 ml-2 pl-2 md:ml-4 md:pl-4 border-l border-gray-600 z-50 pointer-events-auto">
-                      <button onClick={() => setActiveTheme('cyan')} className={`w-3.5 h-3.5 rounded-full bg-cyan-400 ${activeTheme === 'cyan' ? 'ring-2 ring-offset-2 ring-offset-[#0A1128] ring-cyan-400' : 'opacity-50 hover:opacity-100'} transition-all`} title="Neon Cyan"></button>
-                      <button onClick={() => setActiveTheme('emerald')} className={`w-3.5 h-3.5 rounded-full bg-emerald-400 ${activeTheme === 'emerald' ? 'ring-2 ring-offset-2 ring-offset-[#0A1128] ring-emerald-400' : 'opacity-50 hover:opacity-100'} transition-all`} title="Radar Green"></button>
-                      <button onClick={() => setActiveTheme('amber')} className={`w-3.5 h-3.5 rounded-full bg-amber-400 ${activeTheme === 'amber' ? 'ring-2 ring-offset-2 ring-offset-[#0A1128] ring-amber-400' : 'opacity-50 hover:opacity-100'} transition-all`} title="Night Amber"></button>
+
+                {/* Kurung Kanan (Ukuran disesuaikan) */}
+                <span className="anim-bracket-r text-fuchsia-500 text-2xl md:text-3xl font-light ml-4 drop-shadow-[0_0_10px_rgba(217,70,239,0.5)]">]</span>
+              </div>
+
+              {/* BARIS BAWAH: METADATA DENGAN LOGO SVG TAKTIS */}
+              <div className="anim-metadata flex flex-wrap items-center gap-y-2 text-[8.5px] md:text-[9.5px] font-mono tracking-[0.2em] uppercase mt-2.5 ml-2">
+                
+                {currentView === "crew" && selectedCrew ? (
+                  <>
+                    {/* 1. LOGO & DATA RANK */}
+                    <div className="flex items-center mr-6 md:mr-8 group cursor-default">
+                      <svg className="w-3.5 h-3.5 mr-1.5 text-[#64748b] group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
+                      </svg>
+                      <span className="text-[#64748b] mr-1.5 hidden sm:inline">RANK:</span>
+                      <span className="text-[#e2e8f0] font-bold">{selectedCrew.rank || "AB"}</span>
                     </div>
+
+                    {/* 2. LOGO & DATA STATUS */}
+                    <div className="flex items-center mr-6 md:mr-8 group cursor-default">
+                      <svg className={`w-3.5 h-3.5 mr-1.5 ${theme.main} group-hover:text-white transition-colors drop-shadow-[0_0_5px_rgba(0,229,255,0.4)]`} style={{ filter: `drop-shadow(0 0 5px ${theme.hex}66)` }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                      </svg>
+                      <span className="text-[#64748b] mr-1.5 hidden sm:inline">STAT:</span>
+                      <span className={`font-bold ${theme.main}`} style={{ filter: `drop-shadow(0 0 5px ${theme.hex}80)` }}>{selectedCrew.status || "ONBOARD"}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center mr-6 md:mr-8 group cursor-default">
+                    <Icon name={currentView === "overview" ? "Activity" : "Grid"} size={14} className={`mr-1.5 ${theme.main}`} />
+                    <span className="text-[#64748b] mr-1.5 hidden sm:inline">MODE:</span>
+                    <span className={`font-bold ${theme.main}`} style={{ filter: `drop-shadow(0 0 5px ${theme.hex}80)` }}>
+                      {currentView === "overview" ? "GLOBAL STATS" : "FULL MATRIX"}
+                    </span>
                   </div>
-                )
-              )}
+                )}
+
+                {/* 3. LOGO & DATA OPERATOR */}
+                <div className="flex items-center group cursor-default mr-6 md:mr-8">
+                  <svg className="w-3 h-3 mr-1.5 text-[#64748b] group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                  </svg>
+                  <span className="text-[#64748b] mr-1.5 hidden sm:inline">OP:</span>
+                  <span className="text-[#e2e8f0] font-bold">{userName || "WAHYU"}</span>
+                </div>
+
+                {/* Theme Switcher */}
+                <div className="flex items-center gap-2 border-l border-gray-600 pl-4 z-50 pointer-events-auto">
+                  <button onClick={() => setActiveTheme('cyan')} className={`w-3.5 h-3.5 rounded-full bg-cyan-400 ${activeTheme === 'cyan' ? 'ring-2 ring-offset-2 ring-offset-[#0A1128] ring-cyan-400' : 'opacity-50 hover:opacity-100'} transition-all`} title="Neon Cyan"></button>
+                  <button onClick={() => setActiveTheme('emerald')} className={`w-3.5 h-3.5 rounded-full bg-emerald-400 ${activeTheme === 'emerald' ? 'ring-2 ring-offset-2 ring-offset-[#0A1128] ring-emerald-400' : 'opacity-50 hover:opacity-100'} transition-all`} title="Radar Green"></button>
+                  <button onClick={() => setActiveTheme('amber')} className={`w-3.5 h-3.5 rounded-full bg-amber-400 ${activeTheme === 'amber' ? 'ring-2 ring-offset-2 ring-offset-[#0A1128] ring-amber-400' : 'opacity-50 hover:opacity-100'} transition-all`} title="Night Amber"></button>
+                </div>
+
+              </div>
+
             </div>
           </div>
           
-          <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 w-full md:w-auto mt-4 md:mt-0 relative z-40">
-            <button
+          {/* AREA TOMBOL - PRISM HOLOGRAM (SYNCED SIZE & TACTILE CLICKS) */}
+          <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full lg:w-auto mt-4 lg:mt-0 relative z-40">
+            
+            {/* TOMBOL SECONDARY (EXPORT) */}
+            <button 
               onClick={exportToCSV}
-              className="w-full md:w-auto flex justify-center items-center gap-2 px-5 py-3 md:py-2.5 bg-green-600/20 text-green-400 border border-green-500/50 rounded-lg hover:bg-green-500 hover:text-slate-900 transition-all font-semibold text-xs md:text-sm uppercase shadow-[0_0_15px_rgba(74,222,128,0.2)]"
+              className="w-full md:w-auto h-[38px] px-6 flex items-center justify-center text-[9px] md:text-[10px] font-medium tracking-[0.2em] uppercase text-[#64748b] bg-white/[0.02] border border-white/10 rounded-full hover:bg-white/10 hover:text-white hover:border-white/20 hover:shadow-[0_0_15px_rgba(255,255,255,0.05)] active:scale-95 active:bg-white/20 transition-all duration-300 backdrop-blur-md"
             >
-              <Icon name="Download" size={16} /> Export Data
+              Export Data
             </button>
 
+            {/* TOMBOL PRIMARY (ADD CERT) */}
             {isPip && currentView === "crew" && selectedCrew && (
-              <button
+              <button 
                 onClick={() => {
                   setEditingCert(null);
                   setIsModalOpen(true);
                 }}
-                className={`w-full md:w-auto flex justify-center items-center gap-2 px-5 py-3 md:py-2.5 rounded-lg transition-all font-semibold text-xs md:text-sm uppercase ${theme.bgLight} ${theme.main} border ${theme.borderSoft} ${theme.glow} hover:bg-white/10`}
+                className="w-full md:w-auto h-[38px] relative group rounded-full p-[1.5px] bg-gradient-to-r from-fuchsia-500 to-[#00e5ff] shadow-[0_0_20px_rgba(217,70,239,0.25)] hover:shadow-[0_0_30px_rgba(0,229,255,0.4)] active:scale-95 active:shadow-[0_0_40px_rgba(0,229,255,0.7)] transition-all duration-300 cursor-pointer"
               >
-                <Icon name="Plus" size={16} /> Add Certificate
+                
+                {/* Inner Core (Warna Gelap) */}
+                <div className="relative h-full w-full bg-[#05070a] px-6 rounded-full transition-colors duration-300 group-hover:bg-[#0b111a] group-active:bg-[#00e5ff]/10 flex items-center justify-center">
+                  
+                  {/* Teks Magic Reveal */}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white group-hover:from-fuchsia-400 group-hover:to-[#00e5ff] text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase transition-all duration-300 drop-shadow-sm flex items-center">
+                    Add Certificate <span className="text-[#00e5ff] group-hover:text-white transition-colors duration-300 ml-1">+</span>
+                  </span>
+
+                </div>
               </button>
             )}
           </div>
@@ -1783,8 +1888,7 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
             renderMatrixView()
           ) : (
             <>
-              {selectedCrew &&
-                (expiredCertsCount > 0 || criticalCertsCount > 0) && (
+              {selectedCrew && (
                   <>
                     {/* ENGINE ANIMASI HUD 2026 */}
                     <style>{`
@@ -1800,7 +1904,6 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                         width: 20%;
                         height: 3px;
                         background: #ffffff;
-                        box-shadow: 0 0 15px 4px #f43f5e;
                         border-radius: 50%;
                         animation: hud-scan 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
                       }
@@ -1813,52 +1916,83 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                       }
                     `}</style>
 
-                    {/* ZENITH FLOATING HUD - Peringatan Dokumen */}
-                    <div className="w-full mb-8 pt-4 px-2 relative z-20">
+                    {/* ZENITH ADAPTIVE HUD - REFINED SPATIAL LAYOUT 2026 */}
+                    <div className="w-full mb-6 pt-3 px-2 transition-all duration-700 ease-in-out relative z-20">
                       
-                      {/* Header HUD */}
-                      <div className="flex justify-between items-end mb-2">
-                        <h4 className="text-rose-500 font-light text-xl md:text-2xl tracking-[0.25em] uppercase m-0 leading-none drop-shadow-[0_0_8px_rgba(225,29,72,0.3)]">
+                      {/* Header HUD & Core Certs Badge */}
+                      <div className="flex justify-between items-end mb-1.5 transition-colors duration-700">
+                        <h4 className={`font-light text-lg md:text-xl tracking-[0.25em] uppercase m-0 leading-none transition-colors duration-700 ${isSystemAlertActive ? 'text-rose-500 drop-shadow-[0_0_8px_rgba(225,29,72,0.3)]' : 'text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.3)]'}`}>
                           SYSTEM <b className="font-black">ALERT</b>
                         </h4>
-                        <span className="text-rose-400/80 text-[10px] md:text-xs tracking-widest uppercase font-bold animate-pulse">
-                          Radar Active
-                        </span>
-                      </div>
-
-                      {/* Garis Laser dengan Efek Cahaya Berjalan (Scanning) */}
-                      <div className="relative h-[2px] w-full bg-gradient-to-r from-rose-500 via-rose-500/20 to-transparent overflow-hidden mb-5">
-                        <div className="animate-laser-scan"></div>
-                      </div>
-
-                      {/* Data HUD Raksasa (Floating Numbers) */}
-                      <div className="flex flex-row gap-10 md:gap-20">
                         
-                        {/* Kolom Dokumen Mati */}
-                        <div className="flex flex-col">
-                          <span className="text-slate-400 text-[10px] md:text-xs uppercase tracking-[0.2em] mb-1.5 font-medium">
-                            Dokumen Expired
-                          </span>
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-5xl md:text-6xl font-black text-rose-500 text-hud-glow leading-none">
-                              {expiredCertsCount}
+                        {/* Holographic Edge-Badge (Core Certs) - Tanpa Bingkai Kotak */}
+                        <div className={`flex items-center gap-3 px-2 py-0.5 rounded-sm transition-all duration-700 bg-gradient-to-r from-transparent ${
+                          isSystemAlertActive 
+                            ? 'to-rose-500/10 border-r-2 border-rose-500' 
+                            : 'to-[#00e5ff]/10 border-r-2 border-[#00e5ff]'
+                        }`}>
+                          <div className="flex flex-col text-right">
+                            <span className={`text-[8px] md:text-[9px] font-bold tracking-[0.2em] uppercase leading-none mb-0.5 ${isSystemAlertActive ? 'text-rose-400' : 'text-[#00e5ff]'}`}>
+                              Core Certs
                             </span>
-                            <span className="text-slate-500 text-xs tracking-widest uppercase font-bold">Docs</span>
+                            <span className="text-gray-500 text-[6px] md:text-[7px] font-mono tracking-wider uppercase leading-none">
+                              Excl. MCU/Seaman
+                            </span>
                           </div>
+                          <span className={`text-base md:text-lg font-black font-mono animate-pulse ${isSystemAlertActive ? 'text-rose-500 drop-shadow-[0_0_5px_rgba(225,29,72,0.8)]' : 'text-[#00e5ff] drop-shadow-[0_0_5px_rgba(0,229,255,0.8)]'}`}>
+                            {totalSertifikatInti}
+                          </span>
                         </div>
+                      </div>
 
-                        {/* Kolom Dokumen Kritis */}
-                        <div className="flex flex-col">
-                          <span className="text-slate-400 text-[10px] md:text-xs uppercase tracking-[0.2em] mb-1.5 font-medium">
-                            Dokumen Kritis (&le; 30 Hari)
-                          </span>
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-5xl md:text-6xl font-black text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.6)] leading-none">
-                              {criticalCertsCount}
+                      {/* Garis Laser Pemindai (Jarak margin bottom dirapatkan) */}
+                      <div className={`relative h-[2px] w-full overflow-hidden mb-2.5 transition-colors duration-700 bg-gradient-to-r to-transparent ${isSystemAlertActive ? 'from-rose-500 via-rose-500/20' : 'from-[#00e5ff] via-[#00e5ff]/20'}`}>
+                        <div 
+                          className="animate-laser-scan" 
+                          style={{ boxShadow: isSystemAlertActive ? '0 0 15px 4px #f43f5e' : '0 0 15px 4px #00e5ff' }}
+                        ></div>
+                      </div>
+
+                      {/* Konten Bawah - Posisi Naik Mendekati Garis Laser */}
+                      <div className="flex flex-row gap-8 md:gap-16 items-start pl-1">
+                        
+                        {isSystemAlertActive ? (
+                          <>
+                            {expiredDocsCount > 0 && (
+                              <div className="flex flex-row items-center gap-3">
+                                <span className="text-3xl md:text-4xl font-black text-rose-500 text-hud-glow leading-none">
+                                  {expiredDocsCount}
+                                </span>
+                                <div className="flex flex-col mt-1">
+                                  <span className="text-slate-400 text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-medium leading-tight">Dokumen</span>
+                                  <span className="text-rose-500 text-[10px] tracking-widest uppercase font-bold leading-tight">Expired</span>
+                                </div>
+                              </div>
+                            )}
+
+                            {criticalDocsCount > 0 && (
+                              <div className="flex flex-row items-center gap-3">
+                                <span className="text-3xl md:text-4xl font-black text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.6)] leading-none">
+                                  {criticalDocsCount}
+                                </span>
+                                <div className="flex flex-col mt-1">
+                                  <span className="text-slate-400 text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-medium leading-tight">Dokumen</span>
+                                  <span className="text-amber-500 text-[10px] tracking-widest uppercase font-bold leading-tight">Kritis (&le; 30 Hr)</span>
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          
+                          /* Mode Aman - Diperbaiki posisinya agar presisi dengan garis merah Anda */
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#00e5ff] animate-pulse shadow-[0_0_6px_#00e5ff]"></div>
+                            <span className="text-[#64748b] text-[9px] md:text-[10px] tracking-[0.25em] uppercase font-mono mt-0.5">
+                              Semua dokumen <span className="text-[#00e5ff] font-bold">Valid & Aman</span>
                             </span>
-                            <span className="text-slate-500 text-xs tracking-widest uppercase font-bold">Docs</span>
                           </div>
-                        </div>
+                          
+                        )}
 
                       </div>
                     </div>
@@ -1900,155 +2034,160 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
               `}</style>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 animate-fadeIn relative z-20">
-                {sortedCrewCerts.map((cert, index) => {
-                  const status = getExpiryStatus(cert.expiryDate);
-                  const isExpired = status.days <= 0;
-                  return (
-                    <div
-                      key={cert.id}
-                      className={`scroll-grid-2026 glass-panel rounded-xl p-4 md:p-5 border relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${status.class}`}
-                    >
-                      {isExpired && (
-                        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-red-600/50 transform -translate-y-1/2 -rotate-12 pointer-events-none z-20"></div>
-                      )}
-                      <div className="flex justify-between items-start mb-3 md:mb-4 relative z-10">
-                        <div className="flex items-center gap-2 md:gap-3">
-                          <div className="p-2 md:p-2.5 bg-white/5 rounded-lg border border-white/10 flex-shrink-0">
-                            <Icon name="FileText" size={18} className="text-gray-300 md:w-5 md:h-5" />
-                          </div>
-                          <div>
-                            <h4 className="font-bold text-white text-xs md:text-sm leading-tight md:pr-4">
-                              {cert.name}
-                            </h4>
-                            <p className="text-[10px] md:text-xs text-gray-500 font-mono mt-0.5">
-                              {cert.number}
-                            </p>
-                          </div>
-                        </div>
-                        {isPip && (
-                          <div className="flex gap-1 md:gap-1.5 flex-shrink-0 z-40">
-                            {/* TOMBOL SUSUN ULANG (KIRI, KANAN, ATAS, BAWAH) */}
-                            <button
-                              onClick={() => handleJumpCert(cert, "top")}
-                              disabled={index === 0}
-                              title="Pindah ke Paling Pertama"
-                              className={`p-1.5 rounded-md ${index === 0 ? 'text-gray-600 cursor-not-allowed bg-transparent' : `text-gray-400 hover:${theme.main} bg-white/5 md:bg-black/20`}`}
-                            >
-                              <Icon name="ChevronsUp" size={12} className="md:w-3.5 md:h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleMoveCert(index, -1)}
-                              disabled={index === 0}
-                              title="Geser Kiri"
-                              className={`p-1.5 rounded-md ${index === 0 ? 'text-gray-600 cursor-not-allowed bg-transparent' : `text-gray-400 hover:${theme.main} bg-white/5 md:bg-black/20`}`}
-                            >
-                              <Icon name="ChevronLeft" size={12} className="md:w-3.5 md:h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleMoveCert(index, 1)}
-                              disabled={index === sortedCrewCerts.length - 1}
-                              title="Geser Kanan"
-                              className={`p-1.5 rounded-md ${index === sortedCrewCerts.length - 1 ? 'text-gray-600 cursor-not-allowed bg-transparent' : `text-gray-400 hover:${theme.main} bg-white/5 md:bg-black/20`}`}
-                            >
-                              <Icon name="ChevronRight" size={12} className="md:w-3.5 md:h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleJumpCert(cert, "bottom")}
-                              disabled={index === sortedCrewCerts.length - 1}
-                              title="Pindah ke Paling Akhir"
-                              className={`p-1.5 rounded-md ${index === sortedCrewCerts.length - 1 ? 'text-gray-600 cursor-not-allowed bg-transparent' : `text-gray-400 hover:${theme.main} bg-white/5 md:bg-black/20`}`}
-                            >
-                              <Icon name="ChevronsDown" size={12} className="md:w-3.5 md:h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                setEditingCert(cert);
-                                setIsModalOpen(true);
-                              }}
-                              className={`p-1.5 text-gray-400 hover:${theme.main} bg-white/5 md:bg-black/20 rounded-md`}
-                            >
-                              <Icon name="Edit2" size={12} className="md:w-3.5 md:h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteCert(cert.id)}
-                              className="p-1.5 text-gray-400 hover:text-red-400 bg-white/5 md:bg-black/20 rounded-md"
-                            >
-                              <Icon name="Trash2" size={12} className="md:w-3.5 md:h-3.5" />
-                            </button>
-                          </div>
+                {/* Render Sertifikat yang Telah Difilter */}
+                {displayCerts.length > 0 ? (
+                  displayCerts.map((cert, index) => {
+                    const status = getExpiryStatus(cert.expiryDate);
+                    const isExpired = status.days <= 0;
+                    return (
+                      <div
+                        key={cert.id}
+                        className={`scroll-grid-2026 glass-panel rounded-xl p-3 border relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl group ${status.class}`}
+                      >
+                        {isExpired && (
+                          <div className="absolute top-1/2 left-0 w-full h-0.5 bg-red-600/50 transform -translate-y-1/2 -rotate-12 pointer-events-none z-20"></div>
                         )}
-                      </div>
-                      <div className="space-y-1.5 md:space-y-2 mt-3 md:mt-4 text-xs md:text-sm relative z-10 bg-black/20 p-2.5 md:p-3 rounded-lg border border-white/5">
-                        <div className="flex justify-between">
-                          <span className="text-gray-500 text-[10px] md:text-xs">
-                            Terbit
-                          </span>
-                          <span className="text-gray-300 font-mono text-[10px] md:text-xs">
-                            {cert.issueDate}
-                          </span>
-                        </div>
-                        <p className="text-[10px] sm:text-xs text-gray-400 mt-1 flex justify-between">
-                          <span>Kedaluwarsa</span>
-                          <span className={`ml-2 font-mono font-bold ${isExpired && cert.expiryDate !== "Unlimited" ? "text-red-500" : "text-gray-200"}`}>
-                            {cert.expiryDate === "Unlimited" ? "SEUMUR HIDUP" : cert.expiryDate}
-                          </span>
-                        </p>
-                      </div>
-
-                      {/* AREA TEKS BERJALAN (POSISI BARU) */}
-                      <div className="mt-2 w-full overflow-hidden marquee-container relative z-10">
-                        <span className={`marquee-text font-mono text-[10px] md:text-xs font-bold tracking-wider opacity-90 ${status.color}`}>
-                          {status.message}
-                        </span>
-                      </div>
-
-                      <div className="mt-3 md:mt-4 pt-3 md:pt-4 border-t border-white/10 relative z-10">
-                        <div className="w-full h-1 md:h-1.5 bg-black/60 rounded-full mb-2 md:mb-3 overflow-hidden border border-white/5 relative">
-                          <div
-                            className={`absolute top-0 left-0 h-full ${status.bar} shadow-[0_0_10px_currentColor] transition-all duration-1000 ease-out`}
-                            style={{ width: `${status.prog}%` }}
-                          ></div>
-                        </div>
-                        
-                        <div className="flex justify-between items-center w-full">
-                          <div
-                            className={`flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 rounded-md ${status.bg} border border-white/10 shadow-inner flex-shrink-0`}
-                          >
-                            <div className="scale-75 md:scale-100">
-                              {status.icon}
+                        <div className="flex justify-between items-start mb-2 relative z-10">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <div className="p-1.5 bg-white/5 rounded border border-white/10 flex-shrink-0">
+                              <Icon name="FileText" size={16} className="text-gray-300" />
                             </div>
-                            <span
-                              className={`text-[9px] md:text-[11px] font-black tracking-widest uppercase ${status.color}`}
-                            >
-                              {status.label}
+                            <div className="min-w-0 flex-1 pr-2">
+                              <h4 className="font-bold text-white text-xs leading-tight truncate">
+                                {cert.name}
+                              </h4>
+                              <p className="text-[9px] text-gray-500 font-mono mt-0.5 truncate">
+                                {cert.number}
+                              </p>
+                            </div>
+                          </div>
+                          {isPip && (
+                            <div className="flex gap-0.5 flex-shrink-0 z-40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              {/* TOMBOL SUSUN ULANG (KIRI, KANAN, ATAS, BAWAH) */}
+                              <button
+                                onClick={() => handleJumpCert(cert, "top")}
+                                disabled={index === 0}
+                                title="Pindah ke Paling Pertama"
+                                className={`p-1 rounded ${index === 0 ? 'text-gray-600 cursor-not-allowed' : `text-gray-400 hover:${theme.main} hover:bg-white/10`}`}
+                              >
+                                <Icon name="ChevronsUp" size={12} />
+                              </button>
+                              <button
+                                onClick={() => handleMoveCert(index, -1)}
+                                disabled={index === 0}
+                                title="Geser Kiri"
+                                className={`p-1 rounded ${index === 0 ? 'text-gray-600 cursor-not-allowed' : `text-gray-400 hover:${theme.main} hover:bg-white/10`}`}
+                              >
+                                <Icon name="ChevronLeft" size={12} />
+                              </button>
+                              <button
+                                onClick={() => handleMoveCert(index, 1)}
+                                disabled={index === sortedCrewCerts.length - 1}
+                                title="Geser Kanan"
+                                className={`p-1 rounded ${index === sortedCrewCerts.length - 1 ? 'text-gray-600 cursor-not-allowed' : `text-gray-400 hover:${theme.main} hover:bg-white/10`}`}
+                              >
+                                <Icon name="ChevronRight" size={12} />
+                              </button>
+                              <button
+                                onClick={() => handleJumpCert(cert, "bottom")}
+                                disabled={index === sortedCrewCerts.length - 1}
+                                title="Pindah ke Paling Akhir"
+                                className={`p-1 rounded ${index === sortedCrewCerts.length - 1 ? 'text-gray-600 cursor-not-allowed' : `text-gray-400 hover:${theme.main} hover:bg-white/10`}`}
+                              >
+                                <Icon name="ChevronsDown" size={12} />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setEditingCert(cert);
+                                  setIsModalOpen(true);
+                                }}
+                                className={`p-1 text-gray-400 hover:${theme.main} hover:bg-white/10 rounded`}
+                              >
+                                <Icon name="Edit2" size={12} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCert(cert.id)}
+                                className="p-1 text-gray-400 hover:text-red-400 hover:bg-white/10 rounded"
+                              >
+                                <Icon name="Trash2" size={12} />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        <div className="space-y-1 mt-2 text-[9px] font-mono relative z-10 bg-black/20 p-2 rounded-md border border-white/5">
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-500 uppercase tracking-wider">
+                              Terbit
+                            </span>
+                            <span className="text-gray-300">
+                              {cert.issueDate}
                             </span>
                           </div>
-
-                          <div className="flex flex-col items-end flex-shrink-0">
-                            <span
-                              className={`text-xs md:text-sm font-mono font-bold tracking-wider drop-shadow-md ${
-                                status.textClass || (isExpired ? "text-red-500" : "text-white")
-                              }`}
-                            >
-                              {cert.expiryDate === "Unlimited" ? "UNLIMITED" : (isExpired ? "0 HARI" : `${status.days} HARI`)}
-                            </span>
-                            <span
-                              className={`text-[8px] md:text-[9px] uppercase tracking-widest font-bold ${status.color} opacity-80 md:mt-0.5`}
-                            >
-                              {status.action}
+                          <div className="flex justify-between items-center mt-0.5">
+                            <span className="text-gray-500 uppercase tracking-wider">Kedaluwarsa</span>
+                            <span className={`font-bold ${isExpired && cert.expiryDate !== "Unlimited" ? "text-red-500" : "text-gray-200"}`}>
+                              {cert.expiryDate === "Unlimited" ? "SEUMUR HIDUP" : cert.expiryDate}
                             </span>
                           </div>
                         </div>
-                        
+
+                        {/* AREA TEKS BERJALAN (POSISI BARU) */}
+                        <div className="mt-2 w-full overflow-hidden marquee-container relative z-10">
+                          <span className={`marquee-text font-mono text-[9px] md:text-[10px] font-bold tracking-wider opacity-90 ${status.color}`}>
+                            {status.message}
+                          </span>
+                        </div>
+
+                        <div className="mt-2 pt-2 border-t border-white/10 relative z-10">
+                          <div className="w-full h-[2px] bg-black/60 rounded-full mb-1.5 overflow-hidden border border-white/5 relative">
+                            <div
+                              className={`absolute top-0 left-0 h-full ${status.bar} shadow-[0_0_10px_currentColor] transition-all duration-1000 ease-out`}
+                              style={{ width: `${status.prog}%` }}
+                            ></div>
+                          </div>
+                          
+                          <div className="flex justify-between items-center w-full">
+                            <div
+                              className={`flex items-center gap-1 px-1.5 py-0.5 rounded ${status.bg} border border-white/10 shadow-inner flex-shrink-0`}
+                            >
+                              <div className="scale-75">
+                                {status.icon}
+                              </div>
+                              <span
+                                className={`text-[8px] md:text-[9px] font-black tracking-widest uppercase ${status.color}`}
+                              >
+                                {status.label}
+                              </span>
+                            </div>
+
+                            <div className="flex flex-col items-end flex-shrink-0 leading-none">
+                              <span
+                                className={`text-[10px] md:text-xs font-mono font-bold tracking-wider drop-shadow-md ${
+                                  status.textClass || (isExpired ? "text-red-500" : "text-white")
+                                }`}
+                              >
+                                {cert.expiryDate === "Unlimited" ? "UNLIMITED" : (isExpired ? "0 HARI" : `${status.days} HARI`)}
+                              </span>
+                              <span
+                                className={`text-[7px] md:text-[8px] uppercase tracking-widest font-bold ${status.color} opacity-80 mt-0.5`}
+                              >
+                                {status.action}
+                              </span>
+                            </div>
+                          </div>
+                          
+                        </div>
                       </div>
+                    );
+                  })
+                ) : (
+                  /* Tampilan Kosong Jika Tidak Ada Sertifikat di Kategori Tersebut */
+                  <div className="col-span-full flex flex-col items-center justify-center py-20 opacity-50 relative z-20">
+                    <div className="w-16 h-16 rounded-full border border-gray-700 flex items-center justify-center mb-4">
+                      <span className="text-gray-500 font-bold text-xl">✓</span>
                     </div>
-                  );
-                })}
-                {crews.length > 0 && crewCerts.length === 0 && (
-                  <div className="col-span-full flex flex-col items-center justify-center p-8 md:p-12 glass-panel rounded-xl border-dashed border-gray-600 relative z-20">
-                    <Icon name="FileText" size={36} className="text-gray-600 mb-3 md:w-12 md:h-12 md:mb-4" />
-                    <p className="text-gray-400 text-xs md:text-sm text-center">
-                      Tidak ada sertifikat untuk crew ini.
+                    <p className="text-gray-400 font-mono tracking-widest uppercase text-xs">
+                      Tidak ada dokumen {filterStatus === "all" ? "tersedia" : filterStatus}
                     </p>
                   </div>
                 )}
