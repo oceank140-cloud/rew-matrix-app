@@ -1110,28 +1110,58 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
   const getExpiryStatus = (expiryDateStr) => {
     if (expiryDateStr === "Unlimited" || expiryDateStr === "" || !expiryDateStr) {
       return { 
-        label: "VALID", 
-        days: Infinity, 
-        class: "border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.1)] bg-green-950/20", 
-        textClass: "text-emerald-400",
-        icon: <Icon name="CheckCircle" size={16} className="text-emerald-400" />,
-        prog: 100, color: "text-emerald-400", bg: "bg-emerald-500/10", bar: "bg-emerald-400",
-        action: "SEUMUR HIDUP", message: "SERTIFIKAT BERLAKU SEUMUR HIDUP (UNLIMITED)"
+        label: "VALID", days: Infinity, class: "border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.1)] bg-green-950/20", 
+        textClass: "text-emerald-400", icon: <Icon name="CheckCircle" size={16} className="text-emerald-400" />,
+        prog: 100, color: "text-emerald-400", bg: "bg-emerald-500/10", bar: "bg-emerald-400", action: "SEUMUR HIDUP", message: "SEUMUR HIDUP"
       };
     }
 
     const expDate = new Date(expiryDateStr);
     const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0); // Normalisasi waktu
     const diffDays = Math.ceil((expDate - todayDate) / (1000 * 60 * 60 * 24));
     const prog = Math.min(100, Math.max(0, (diffDays / 365) * 100));
-    const monthsLeft = Math.floor(diffDays / 30);
-    let message = diffDays <= 0 ? "SERTIFIKAT KEDALUWARSA - DOKUMEN MATI" : (monthsLeft < 1 ? "SISA WAKTU KURANG DARI 1 BULAN" : `SISA WAKTU: ${monthsLeft} BULAN`);
+    
+    // LOGIKA FORMAT WAKTU PINTAR (SINGKATAN: SW / EXP)
+    const absDays = Math.abs(diffDays);
+    const yearsLeft = Math.floor(absDays / 365);
+    const monthsLeft = Math.floor((absDays % 365) / 30);
+    const daysLeft = (absDays % 365) % 30;
+
+    let parts = [];
+    if (yearsLeft > 0) parts.push(`${yearsLeft} Thn`);
+    if (monthsLeft > 0) parts.push(`${monthsLeft} Bln`);
+    if (daysLeft > 0 || (yearsLeft === 0 && monthsLeft === 0)) parts.push(`${daysLeft} Hr`);
+    
+    const detailTime = parts.join(" ");
+    let message = diffDays <= 0 
+      ? `EXP: -${detailTime}` 
+      : `SW: ${detailTime}`;
 
     if (diffDays <= 0) return { label: "EXPIRED", class: "cert-expired", icon: <Icon name="XCircle" size={16} className="text-red-500" />, days: diffDays, prog: 0, color: "text-red-500", bg: "bg-red-500/20", bar: "bg-red-500", action: "DOKUMEN MATI", message };
     if (diffDays <= 10) return { label: "CRITICAL", class: "blink-red bg-red-950/30", icon: <Icon name="AlertTriangle" size={16} className="text-red-400" />, days: diffDays, prog, color: "text-red-400", bg: "bg-red-500/20", bar: "bg-red-400", action: "PERPANJANG SEGERA", message };
     if (diffDays <= 20) return { label: "WARNING", class: "pulse-orange bg-orange-950/30", icon: <Icon name="Clock" size={16} className="text-orange-400" />, days: diffDays, prog, color: "text-orange-400", bg: "bg-orange-500/20", bar: "bg-orange-400", action: "PROSES SEKARANG", message };
     if (diffDays <= 30) return { label: "ATTENTION", class: "glow-yellow bg-yellow-950/20", icon: <Icon name="Clock" size={16} className="text-yellow-400" />, days: diffDays, prog, color: "text-yellow-400", bg: "bg-yellow-500/20", bar: "bg-yellow-400", action: "SIAPKAN DOKUMEN", message };
     return { label: "VALID", class: "border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.1)] bg-green-950/20", icon: <Icon name="CheckCircle" size={16} className="text-green-400" />, days: diffDays, prog, color: "text-green-400", bg: "bg-green-500/10", bar: "bg-green-400", action: "STATUS AMAN", message };
+  };
+
+  // --- SMART TIME FORMATTER 2026 ---
+  const formatSisaWaktu = (days) => {
+    if (days < 0) return `${days} HARI`; // Menampilkan minus untuk yang sudah expired
+    if (days === 0) return "HARI INI";
+    if (days < 30) return `${days} HARI`;
+    
+    const years = Math.floor(days / 365);
+    const months = Math.floor((days % 365) / 30);
+    const remainingDays = (days % 365) % 30;
+
+    if (months === 12) return `${years + 1} THN`; // Edge case pembulatan
+
+    if (years > 0) {
+      return `${years} THN ${months > 0 ? months + ' BLN' : ''}`.trim();
+    } else {
+      return `${months} BLN ${remainingDays > 0 ? remainingDays + ' HR' : ''}`.trim();
+    }
   };
 
   const filteredCrews = sortedCrews.filter((crew) => {
@@ -2187,26 +2217,37 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
             </div>
           </div>
           
+          {/* AREA TOMBOL KANAN ATAS (SETTINGS, EXPORT, ADD CERT) */}
           <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full lg:w-auto mt-4 lg:mt-0 relative z-40">
+            
+            {/* SEMUA TOMBOL INI HANYA MUNCUL JIKA USER ADALAH ADMIN (PIP) */}
             {isPip && (
-              <button onClick={() => setIsSettingsOpen(true)} className="w-full md:w-auto h-[38px] px-4 flex items-center justify-center text-gray-400 bg-white/[0.02] border border-white/10 rounded-full hover:bg-white/10 hover:text-[#00e5ff] hover:border-[#00e5ff]/50 hover:shadow-[0_0_15px_rgba(0,229,255,0.3)] active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer" title="System Settings">
-                <Icon name="Settings" size={16} />
-              </button>
+              <>
+                <button onClick={() => setIsSettingsOpen(true)} className="w-full md:w-auto h-[38px] px-4 flex items-center justify-center text-gray-400 bg-white/[0.02] border border-white/10 rounded-full hover:bg-white/10 hover:text-[#00e5ff] hover:border-[#00e5ff]/50 hover:shadow-[0_0_15px_rgba(0,229,255,0.3)] active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer" title="System Settings">
+                  <Icon name="Settings" size={16} />
+                </button>
+                
+                <button onClick={exportToCSV} className="w-full md:w-auto h-[38px] px-6 flex items-center justify-center gap-2.5 text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase text-[#00e5ff]/70 bg-gradient-to-r from-[#00e5ff]/5 to-transparent border border-[#00e5ff]/30 rounded-full hover:bg-[#00e5ff]/15 hover:text-white hover:border-[#00e5ff] hover:shadow-[0_0_20px_rgba(0,229,255,0.4),inset_0_0_10px_rgba(0,229,255,0.2)] active:scale-95 transition-all duration-300 backdrop-blur-md group overflow-hidden relative cursor-pointer">
+                  <div className="absolute top-0 -left-[100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 group-hover:left-[200%] transition-all duration-700 ease-out z-0"></div>
+                  <div className="relative z-10 group-hover:-translate-y-0.5 group-hover:text-[#00e5ff] transition-transform duration-300"><Icon name="Download" size={14} /></div>
+                  <span className="relative z-10 group-hover:drop-shadow-[0_0_8px_#00e5ff] transition-all">CSV</span>
+                </button>
+                
+                <button onClick={exportToPDF} className="w-full md:w-auto h-[38px] px-6 flex items-center justify-center gap-2.5 text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase text-fuchsia-400 bg-gradient-to-r from-fuchsia-500/5 to-transparent border border-fuchsia-500/30 rounded-full hover:bg-fuchsia-500/15 hover:text-white hover:border-fuchsia-500 hover:shadow-[0_0_20px_rgba(217,70,239,0.4),inset_0_0_10px_rgba(217,70,239,0.2)] active:scale-95 transition-all duration-300 backdrop-blur-md group overflow-hidden relative cursor-pointer">
+                  <div className="absolute top-0 -left-[100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 group-hover:left-[200%] transition-all duration-700 ease-out z-0"></div>
+                  <div className="relative z-10 group-hover:-translate-y-0.5 group-hover:text-fuchsia-400 transition-transform duration-300"><Icon name="FileDown" size={14} /></div>
+                  <span className="relative z-10 group-hover:drop-shadow-[0_0_8px_#d946ef] transition-all whitespace-nowrap">PDF MANIFEST</span>
+                </button>
+              </>
             )}
-            <button onClick={exportToCSV} className="w-full md:w-auto h-[38px] px-6 flex items-center justify-center gap-2.5 text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase text-[#00e5ff]/70 bg-gradient-to-r from-[#00e5ff]/5 to-transparent border border-[#00e5ff]/30 rounded-full hover:bg-[#00e5ff]/15 hover:text-white hover:border-[#00e5ff] hover:shadow-[0_0_20px_rgba(0,229,255,0.4),inset_0_0_10px_rgba(0,229,255,0.2)] active:scale-95 transition-all duration-300 backdrop-blur-md group overflow-hidden relative cursor-pointer">
-              <div className="absolute top-0 -left-[100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 group-hover:left-[200%] transition-all duration-700 ease-out z-0"></div>
-              <div className="relative z-10 group-hover:-translate-y-0.5 group-hover:text-[#00e5ff] transition-transform duration-300"><Icon name="Download" size={14} /></div>
-              <span className="relative z-10 group-hover:drop-shadow-[0_0_8px_#00e5ff] transition-all">CSV</span>
-            </button>
-            <button onClick={exportToPDF} className="w-full md:w-auto h-[38px] px-6 flex items-center justify-center gap-2.5 text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase text-fuchsia-400 bg-gradient-to-r from-fuchsia-500/5 to-transparent border border-fuchsia-500/30 rounded-full hover:bg-fuchsia-500/15 hover:text-white hover:border-fuchsia-500 hover:shadow-[0_0_20px_rgba(217,70,239,0.4),inset_0_0_10px_rgba(217,70,239,0.2)] active:scale-95 transition-all duration-300 backdrop-blur-md group overflow-hidden relative cursor-pointer">
-              <div className="absolute top-0 -left-[100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 group-hover:left-[200%] transition-all duration-700 ease-out z-0"></div>
-              <div className="relative z-10 group-hover:-translate-y-0.5 group-hover:text-fuchsia-400 transition-transform duration-300"><Icon name="FileDown" size={14} /></div>
-              <span className="relative z-10 group-hover:drop-shadow-[0_0_8px_#d946ef] transition-all whitespace-nowrap">PDF MANIFEST</span>
-            </button>
+
+            {/* TOMBOL ADD CERTIFICATE (Juga Hanya Untuk PIP) */}
             {isPip && currentView === "crew" && selectedCrew && (
               <button onClick={() => { setEditingCert(null); setIsModalOpen(true); }} className="w-full md:w-auto h-[38px] relative group rounded-full p-[1.5px] bg-gradient-to-r from-fuchsia-500 to-[#00e5ff] shadow-[0_0_20px_rgba(217,70,239,0.25)] hover:shadow-[0_0_30px_rgba(0,229,255,0.4)] active:scale-95 active:shadow-[0_0_40px_rgba(0,229,255,0.7)] transition-all duration-300 cursor-pointer">
                 <div className="relative h-full w-full bg-[#05070a] px-6 rounded-full transition-colors duration-300 group-hover:bg-[#0b111a] group-active:bg-[#00e5ff]/10 flex items-center justify-center">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white group-hover:from-fuchsia-400 group-hover:to-[#00e5ff] text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase transition-all duration-300 drop-shadow-sm flex items-center whitespace-nowrap">Add Certificate <span className="text-[#00e5ff] group-hover:text-white transition-colors duration-300 ml-1">+</span></span>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white group-hover:from-fuchsia-400 group-hover:to-[#00e5ff] text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase transition-all duration-300 drop-shadow-sm flex items-center whitespace-nowrap">
+                    Add Certificate <span className="text-[#00e5ff] group-hover:text-white transition-colors duration-300 ml-1">+</span>
+                  </span>
                 </div>
               </button>
             )}
@@ -2352,8 +2393,53 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                           <div className="flex justify-between items-center"><span className="text-gray-500 uppercase tracking-widest">Kedaluwarsa</span><span className={`font-bold ${isExpired && cert.expiryDate !== "Unlimited" ? "text-rose-500 drop-shadow-[0_0_5px_#e11d48]" : "text-white"}`}>{cert.expiryDate === "Unlimited" ? "SEUMUR HIDUP" : cert.expiryDate}</span></div>
                         </div>
 
-                        <div className="mt-3 w-full overflow-hidden marquee-container relative z-10 pointer-events-none">
-                          <span className={`marquee-text font-mono text-[9px] md:text-[10px] font-bold tracking-widest uppercase opacity-90 ${status.color}`}>{status.message}</span>
+                        {/* ANIMASI PINTU RAHASIA: Kurung Terbuka Saat Hover (SECURE VAULT DOOR) */}
+                        <div className="mt-3.5 w-full flex justify-center items-center relative z-10 pointer-events-none h-[22px]">
+                          <style>{`
+                            /* Animasi Idle: Kurung merapat dan menyala halus (pulse) */
+                            @keyframes vault-pulse { 
+                              0%, 100% { opacity: 0.6; text-shadow: 0 0 5px #d946ef; } 
+                              50% { opacity: 1; text-shadow: 0 0 15px #d946ef, 0 0 25px rgba(217,70,239,0.5); } 
+                            }
+                            .vault-bracket { 
+                              animation: vault-pulse 2.5s ease-in-out infinite; 
+                            }
+
+                            /* Transisi Teks: Dari lebar 0 menjadi memanjang */
+                            .vault-text-wrapper {
+                              max-width: 0px; /* Tersembunyi sempurna saat tidak disentuh */
+                              opacity: 0;
+                              overflow: hidden;
+                              white-space: nowrap;
+                              transition: max-width 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease-in-out 0.1s;
+                            }
+
+                            /* Saat Kartu Disentuh (Hover), teks meluas, mendorong kurung ke samping! */
+                            .group:hover .vault-text-wrapper {
+                              max-width: 250px; /* Teks terbuka perlahan membelah kurung */
+                              opacity: 1;
+                            }
+                            .group:hover .vault-bracket {
+                              animation: none; /* Matikan kedipan saat pintu terbuka */
+                              opacity: 1;
+                              color: #e879f9;
+                            }
+                          `}</style>
+
+                          <div className="flex items-center justify-center font-mono text-[9.5px] md:text-[10.5px] font-bold tracking-[0.2em] uppercase relative">
+                            {/* Kurung Kiri (Warna Fuchsia Elegan) */}
+                            <span className="text-[#d946ef] vault-bracket transition-colors duration-500 mr-1">[</span>
+                            
+                            {/* Teks Waktu (Mulai dari 0px, perlahan meluas ke kiri-kanan) */}
+                            <div className="vault-text-wrapper flex justify-center items-center">
+                              <span className={`${status.color} drop-shadow-[0_0_6px_currentColor] px-1.5`}>
+                                {status.message}
+                              </span>
+                            </div>
+                            
+                            {/* Kurung Kanan (Warna Fuchsia Elegan) */}
+                            <span className="text-[#d946ef] vault-bracket transition-colors duration-500 ml-1">]</span>
+                          </div>
                         </div>
 
                         <div className="mt-2.5 pt-3 border-t border-white/10 relative z-10 pointer-events-none">
@@ -2370,7 +2456,9 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                               <span className={`text-[8.5px] md:text-[9.5px] font-black tracking-widest uppercase drop-shadow-[0_0_5px_currentColor] ${status.color}`}>{status.label}</span>
                             </div>
                             <div className="flex flex-col items-end flex-shrink-0 leading-none">
-                              <span className={`text-xs md:text-sm font-mono font-black tracking-wider drop-shadow-[0_0_5px_currentColor] ${status.textClass || (isExpired ? "text-rose-500" : "text-white")}`}>{cert.expiryDate === "Unlimited" ? "UNLIMITED" : (isExpired ? "0 HARI" : `${status.days} HARI`)}</span>
+                              <span className={`text-xs md:text-sm font-mono font-black tracking-wider drop-shadow-[0_0_5px_currentColor] ${status.textClass || (isExpired ? "text-rose-500" : "text-white")}`}>
+                                {cert.expiryDate === "Unlimited" ? "UNLIMITED" : formatSisaWaktu(status.days)}
+                              </span>
                               <span className={`text-[7px] md:text-[8px] uppercase tracking-widest font-bold ${status.color} opacity-70 mt-1`}>{status.action}</span>
                             </div>
                           </div>
