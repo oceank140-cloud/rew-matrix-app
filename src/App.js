@@ -53,7 +53,8 @@ const Icon = ({ name, size = 24, className = "", strokeWidth = 2, title }) => {
     Settings: <><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></>,
     Zap: <><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></>,
     Check: <><polyline points="20 6 9 17 4 12"/></>,
-    FileDown: <><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></>
+    FileDown: <><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></>,
+    RefreshCw: <><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></>
   };
 
   return (
@@ -280,17 +281,17 @@ const LoginPage = ({ onLogin }) => {
 
         if (password === adminPass) {
           setLoadingText("[ AKSES DITERIMA ]");
-          sessionStorage.setItem("jwt_token", "token_pip_dynamic_2026");
-          sessionStorage.setItem("user_role", "pip");
-          sessionStorage.setItem("user_name", sanitizedUser);
+          localStorage.setItem("jwt_token", "token_pip_dynamic_2026");
+          localStorage.setItem("user_role", "pip");
+          localStorage.setItem("user_name", sanitizedUser);
           setTimeout(() => {
             onLogin({ isAuthenticated: true, role: "pip", name: sanitizedUser });
           }, 500); 
         } else if (password === crewPass) {
           setLoadingText("[ AKSES DITERIMA ]");
-          sessionStorage.setItem("jwt_token", "token_crew_dynamic_2026");
-          sessionStorage.setItem("user_role", "crew");
-          sessionStorage.setItem("user_name", sanitizedUser);
+          localStorage.setItem("jwt_token", "token_crew_dynamic_2026");
+          localStorage.setItem("user_role", "crew");
+          localStorage.setItem("user_name", sanitizedUser);
           setTimeout(() => {
             onLogin({ isAuthenticated: true, role: "crew", name: sanitizedUser });
           }, 500);
@@ -685,7 +686,7 @@ const ConfirmModal = ({ isOpen, message, onConfirm, onCancel }) => {
         </div>
 
         <div className="p-6 md:p-8 flex flex-col items-center text-center relative z-10">
-          <div className="w-16 h-16 bg-rose-950/80 rounded-full flex items-center justify-center mb-5 border border-rose-500 anim-strobe-glitch shadow-[0_0_20px_#e11d48]">
+          <div className="w-16 h-16 bg-rose-950/80 rounded-full flex items-center justify-center mb-5 border border-rose-50 anim-strobe-glitch shadow-[0_0_20px_#e11d48]">
             <Icon name="AlertTriangle" size={32} className="text-rose-500" />
           </div>
           
@@ -1007,6 +1008,8 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
   const theme = MARINE_THEMES[activeTheme];
   const isPip = userRole === "pip"; 
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   // OPTIMASI KRUSIAL: Mencegah CPU/RAM Overload saat mouse digerakkan
   const glowRef = React.useRef(null);
   useEffect(() => {
@@ -1108,18 +1111,21 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
     return orderA - orderB;
   });
 
-  const getExpiryStatus = (expiryDateStr) => {
+  const getExpiryStatus = (expiryDateStr, currentTheme) => {
+    // Ambil warna hex dari tema aktif (default ke Cyan jika tidak ada)
+    const tHex = currentTheme?.hex || "#00e5ff"; 
+
     if (expiryDateStr === "Unlimited" || expiryDateStr === "" || !expiryDateStr) {
       return { 
-        label: "VALID", days: Infinity, class: "border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.1)] bg-green-950/20", 
-        textClass: "text-emerald-400", icon: <Icon name="CheckCircle" size={16} className="text-emerald-400" />,
-        prog: 100, color: "text-emerald-400", bg: "bg-emerald-500/10", bar: "bg-emerald-400", action: "SEUMUR HIDUP", message: "SEUMUR HIDUP"
+        label: "VALID", days: Infinity, class: "border-current/30 shadow-[0_0_15px_currentColor] bg-current/10", 
+        textClass: "text-current", icon: <Icon name="CheckCircle" size={16} className="text-current" />,
+        prog: 100, color: "text-current", bg: "bg-current opacity-20", bar: "bg-current", action: "SEUMUR HIDUP", message: "SEUMUR HIDUP", hex: tHex
       };
     }
 
     const expDate = new Date(expiryDateStr);
     const todayDate = new Date();
-    todayDate.setHours(0, 0, 0, 0); // Normalisasi waktu
+    todayDate.setHours(0, 0, 0, 0); 
     const diffDays = Math.ceil((expDate - todayDate) / (1000 * 60 * 60 * 24));
     const prog = Math.min(100, Math.max(0, (diffDays / 365) * 100));
     
@@ -1135,15 +1141,28 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
     if (daysLeft > 0 || (yearsLeft === 0 && monthsLeft === 0)) parts.push(`${daysLeft} Hr`);
     
     const detailTime = parts.join(" ");
-    let message = diffDays <= 0 
-      ? `EXP: -${detailTime}` 
-      : `SW: ${detailTime}`;
+    let message = diffDays <= 0 ? `EXP: -${detailTime}` : `SW: ${detailTime}`;
 
-    if (diffDays <= 0) return { label: "EXPIRED", class: "cert-expired", icon: <Icon name="XCircle" size={16} className="text-red-500" />, days: diffDays, prog: 0, color: "text-red-500", bg: "bg-red-500/20", bar: "bg-red-500", action: "DOKUMEN MATI", message };
-    if (diffDays <= 10) return { label: "CRITICAL", class: "blink-red bg-red-950/30", icon: <Icon name="AlertTriangle" size={16} className="text-red-400" />, days: diffDays, prog, color: "text-red-400", bg: "bg-red-500/20", bar: "bg-red-400", action: "PERPANJANG SEGERA", message };
-    if (diffDays <= 20) return { label: "WARNING", class: "pulse-orange bg-orange-950/30", icon: <Icon name="Clock" size={16} className="text-orange-400" />, days: diffDays, prog, color: "text-orange-400", bg: "bg-orange-500/20", bar: "bg-orange-400", action: "PROSES SEKARANG", message };
-    if (diffDays <= 30) return { label: "ATTENTION", class: "glow-yellow bg-yellow-950/20", icon: <Icon name="Clock" size={16} className="text-yellow-400" />, days: diffDays, prog, color: "text-yellow-400", bg: "bg-yellow-500/20", bar: "bg-yellow-400", action: "SIAPKAN DOKUMEN", message };
-    return { label: "VALID", class: "border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.1)] bg-green-950/20", icon: <Icon name="CheckCircle" size={16} className="text-green-400" />, days: diffDays, prog, color: "text-green-400", bg: "bg-green-500/10", bar: "bg-green-400", action: "STATUS AMAN", message };
+    // STATUS BAHAYA: Tetap gunakan warna statis (Merah/Kuning) agar keamanan tidak terganggu
+    if (diffDays <= 0) return { label: "EXPIRED", class: "cert-expired", icon: <Icon name="XCircle" size={16} className="text-red-500" />, days: diffDays, prog: 0, color: "text-red-500", bg: "bg-red-500/20", bar: "bg-red-500", action: "DOKUMEN MATI", message, hex: "#f43f5e" };
+    if (diffDays <= 10) return { label: "CRITICAL", class: "blink-red bg-red-950/30", icon: <Icon name="AlertTriangle" size={16} className="text-red-400" />, days: diffDays, prog, color: "text-red-400", bg: "bg-red-500/20", bar: "bg-red-400", action: "PERPANJANG SEGERA", message, hex: "#f87171" };
+    if (diffDays <= 20) return { label: "WARNING", class: "pulse-orange bg-orange-950/30", icon: <Icon name="Clock" size={16} className="text-orange-400" />, days: diffDays, prog, color: "text-orange-400", bg: "bg-orange-500/20", bar: "bg-orange-400", action: "PROSES SEKARANG", message, hex: "#fbbf24" };
+    if (diffDays <= 30) return { label: "ATTENTION", class: "glow-yellow bg-yellow-950/20", icon: <Icon name="Clock" size={16} className="text-yellow-400" />, days: diffDays, prog, color: "text-yellow-400", bg: "bg-yellow-500/20", bar: "bg-yellow-400", action: "SIAPKAN DOKUMEN", message, hex: "#facc15" };
+    
+    // STATUS VALID: Otomatis beradaptasi (Bunglon) dengan Tema Global (Cyan/Emerald/Amber)
+    return { 
+        label: "VALID", 
+        class: "border-current/30 shadow-[0_0_15px_currentColor] bg-current/10", 
+        icon: <Icon name="CheckCircle" size={16} className="text-current" />, 
+        days: diffDays, 
+        prog, 
+        color: "text-current", 
+        bg: "bg-current opacity-20", 
+        bar: "bg-current", 
+        action: "STATUS AMAN", 
+        message, 
+        hex: tHex // Menyuntikkan warna tema ke kulit luar kartu
+    };
   };
 
   const formatSisaWaktu = (days) => {
@@ -1781,12 +1800,13 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                         const foundCert = crewDocs.find(c => c.name.toLowerCase() === expectedName.toLowerCase());
                         
                         if (foundCert) {
-                          const status = getExpiryStatus(foundCert.expiryDate);
+                          const status = getExpiryStatus(foundCert.expiryDate, theme);
                           return (
                             <td key={key} className="p-2 border-x border-white/5 relative z-10 transition-colors group-hover:border-white/10">
                               <div 
                                 title={`${expectedName}\nStatus: ${status.label}\nSisa: ${status.days > 0 ? status.days + ' Hari' : 'Kedaluwarsa'}`}
                                 className={`mx-auto w-7 h-7 md:w-8 md:h-8 rounded-md flex items-center justify-center cursor-help transition-all duration-300 group-hover:scale-110 ${status.bg} border border-white/10 relative overflow-hidden`}
+                                style={{ color: status.hex }}
                               >
                                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-t from-white/20 to-transparent transition-opacity duration-300"></div>
                                 <div className="scale-75 md:scale-100 relative z-10">{status.icon}</div>
@@ -1888,17 +1908,64 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
           <div className="p-4 flex-1 overflow-hidden flex flex-col">
             <div className="overflow-y-auto flex-1 pr-2 pb-4">
               <div className="mb-8 px-1">
-                <p className="text-[8px] text-[#475569] font-bold tracking-[0.3em] uppercase mb-4 ml-1">Main Menu</p>
+                <p className="text-[8px] text-[#475569] font-bold tracking-[0.3em] uppercase mb-4 ml-1">
+                  Main Menu
+                </p>
                 <div className="grid grid-cols-2 gap-3">
-                  <button onClick={() => { setCurrentView("overview"); setSelectedCrewId(null); if (window.innerWidth < 768) setIsSidebarOpen(false); }} className={`relative flex flex-col items-start p-3.5 border rounded-xl active:scale-105 transition-all duration-300 group cursor-pointer text-left overflow-hidden ${currentView === "overview" ? `bg-gradient-to-br ${theme.bgLight} to-transparent ${theme.borderSoft}` : "bg-[#0a0d14] border-white/5 hover:border-white/20 hover:bg-white/[0.02] hover:shadow-[0_0_15px_rgba(255,255,255,0.02)]"}`} style={currentView === "overview" ? { boxShadow: `inset 0 1px 0 rgba(255,255,255,0.1), 0 0 15px ${theme.hex}25` } : {}}>
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 transition-colors duration-300 ${currentView === "overview" ? `${theme.bgLight} ${theme.main}` : "bg-white/5 text-[#64748b] group-hover:text-white"}`}><Icon name="Home" size={16} /></div>
-                    <span className={`text-[9.5px] font-black uppercase tracking-widest mb-1 transition-colors duration-300 ${currentView === "overview" ? theme.main : "text-gray-400 group-hover:text-white"}`} style={currentView === "overview" ? { filter: `drop-shadow(0 0 5px ${theme.hex}80)` } : {}}>Overview</span>
-                    <span className="text-[#64748b] text-[6.5px] font-mono uppercase tracking-[0.2em] leading-tight">Global_Status</span>
+                  <button
+                    onClick={() => {
+                      setCurrentView("overview");
+                      setSelectedCrewId(null);
+                      if (window.innerWidth < 768) setIsSidebarOpen(false);
+                    }}
+                    className={`relative flex flex-col items-start p-3.5 border rounded-xl active:scale-105 transition-all duration-300 group cursor-pointer text-left overflow-hidden ${
+                      currentView === "overview"
+                        ? `bg-gradient-to-br ${theme.bgLight} to-transparent ${theme.borderSoft}`
+                        : "bg-[#0a0d14] border-white/5 hover:border-white/20 hover:bg-white/[0.02] hover:shadow-[0_0_15px_rgba(255,255,255,0.02)]"
+                    }`}
+                    style={currentView === "overview" ? { boxShadow: `inset 0 1px 0 rgba(255,255,255,0.1), 0 0 15px ${theme.hex}25` } : {}}
+                  >
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 transition-colors duration-300 ${
+                      currentView === "overview" ? `${theme.bgLight} ${theme.main}` : "bg-white/5 text-[#64748b] group-hover:text-white"
+                    }`}>
+                      <Icon name="Home" size={16} />
+                    </div>
+                    <span className={`text-[9.5px] font-black uppercase tracking-widest mb-1 transition-colors duration-300 ${
+                      currentView === "overview" ? theme.main : "text-gray-400 group-hover:text-white"
+                    }`} style={currentView === "overview" ? { filter: `drop-shadow(0 0 5px ${theme.hex}80)` } : {}}>
+                      Overview
+                    </span>
+                    <span className="text-[#64748b] text-[6.5px] font-mono uppercase tracking-[0.2em] leading-tight">
+                      Global_Status
+                    </span>
                   </button>
-                  <button onClick={() => { setCurrentView("matrix"); setSelectedCrewId(null); if (window.innerWidth < 768) setIsSidebarOpen(false); }} className={`relative flex flex-col items-start p-3.5 border rounded-xl active:scale-105 transition-all duration-300 group cursor-pointer text-left overflow-hidden ${currentView === "matrix" ? `bg-gradient-to-br ${theme.bgLight} to-transparent ${theme.borderSoft}` : "bg-[#0a0d14] border-white/5 hover:border-white/20 hover:bg-white/[0.02] hover:shadow-[0_0_15px_rgba(255,255,255,0.02)]"}`} style={currentView === "matrix" ? { boxShadow: `inset 0 1px 0 rgba(255,255,255,0.1), 0 0 15px ${theme.hex}25` } : {}}>
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 transition-colors duration-300 ${currentView === "matrix" ? `${theme.bgLight} ${theme.main}` : "bg-white/5 text-[#64748b] group-hover:text-white"}`}><Icon name="Grid" size={16} /></div>
-                    <span className={`text-[9.5px] font-black uppercase tracking-widest mb-1 transition-colors duration-300 ${currentView === "matrix" ? theme.main : "text-gray-400 group-hover:text-white"}`} style={currentView === "matrix" ? { filter: `drop-shadow(0 0 5px ${theme.hex}80)` } : {}}>Matrix</span>
-                    <span className="text-[#64748b] text-[6.5px] font-mono uppercase tracking-[0.2em] leading-tight">Full_Grid</span>
+
+                  <button
+                    onClick={() => {
+                      setCurrentView("matrix");
+                      setSelectedCrewId(null);
+                      if (window.innerWidth < 768) setIsSidebarOpen(false);
+                    }}
+                    className={`relative flex flex-col items-start p-3.5 border rounded-xl active:scale-105 transition-all duration-300 group cursor-pointer text-left overflow-hidden ${
+                      currentView === "matrix"
+                        ? `bg-gradient-to-br ${theme.bgLight} to-transparent ${theme.borderSoft}`
+                        : "bg-[#0a0d14] border-white/5 hover:border-white/20 hover:bg-white/[0.02] hover:shadow-[0_0_15px_rgba(255,255,255,0.02)]"
+                    }`}
+                    style={currentView === "matrix" ? { boxShadow: `inset 0 1px 0 rgba(255,255,255,0.1), 0 0 15px ${theme.hex}25` } : {}}
+                  >
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 transition-colors duration-300 ${
+                      currentView === "matrix" ? `${theme.bgLight} ${theme.main}` : "bg-white/5 text-[#64748b] group-hover:text-white"
+                    }`}>
+                      <Icon name="Grid" size={16} />
+                    </div>
+                    <span className={`text-[9.5px] font-black uppercase tracking-widest mb-1 transition-colors duration-300 ${
+                      currentView === "matrix" ? theme.main : "text-gray-400 group-hover:text-white"
+                    }`} style={currentView === "matrix" ? { filter: `drop-shadow(0 0 5px ${theme.hex}80)` } : {}}>
+                      Matrix
+                    </span>
+                    <span className="text-[#64748b] text-[6.5px] font-mono uppercase tracking-[0.2em] leading-tight">
+                      Full_Grid
+                    </span>
                   </button>
                 </div>
               </div>
@@ -1983,13 +2050,18 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
 
               <style>{`
                 @supports (animation-timeline: view()) {
-                  @keyframes cinematic-scroll { 
-                    0% { opacity: 0; transform: translateY(20px) scale(0.9); filter: blur(5px); } 
-                    10% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0px); } 
-                    95% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0px); } 
-                    100% { opacity: 0.5; transform: translateY(-10px) scale(0.95); filter: blur(2px); } 
+                  @keyframes cinematic-scroll {
+                    0% { opacity: 0; transform: translateY(20px) scale(0.9); filter: blur(5px); }
+                    10% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0px); }
+                    95% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0px); }
+                    100% { opacity: 0.5; transform: translateY(-10px) scale(0.95); filter: blur(2px); }
                   }
-                  .scroll-fx-2026 { animation: cinematic-scroll linear both; animation-timeline: view(); animation-range: cover 0% cover 100%; will-change: transform, opacity, filter; }
+                  .scroll-fx-2026 {
+                    animation: cinematic-scroll linear both;
+                    animation-timeline: view();
+                    animation-range: cover 0% cover 100%;
+                    will-change: transform, opacity, filter;
+                  }
                 }
               `}</style>
 
@@ -2116,7 +2188,7 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
         </div>
       </aside>
       
-      <main className="flex-1 relative bg-[#12121A] overflow-hidden flex flex-col w-full">
+      <main className="flex-1 relative bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1e293b] via-[#050A15] to-[#02040A] overflow-hidden flex flex-col w-full">
         <HologramWatermark />
         <div ref={glowRef} className="pointer-events-none fixed inset-0 z-30 transition-opacity duration-300" style={{ background: `radial-gradient(600px circle at 0px 0px, ${theme?.hex}15, transparent 40%)` }} />
 
@@ -2179,6 +2251,25 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
             {/* BLOK INI WAJIB TERKUNCI HANYA UNTUK ADMIN (ISPIP === TRUE) */}
             {isPip && (
               <>
+                {/* TOMBOL SOFT REFRESH (ANTI-LOGOUT) */}
+                <button 
+                  onClick={() => {
+                    setIsRefreshing(true);
+                    // Simulasi penarikan data ulang selama 1.5 detik
+                    setTimeout(() => setIsRefreshing(false), 1500); 
+                  }} 
+                  className={`w-full md:w-auto h-[38px] px-4 flex items-center justify-center bg-white/[0.02] border border-white/10 rounded-full transition-all duration-300 backdrop-blur-md cursor-pointer
+                    ${isRefreshing ? 'border-[#00e5ff]/50 shadow-[0_0_20px_rgba(0,229,255,0.4)] bg-[#00e5ff]/10' : 'hover:bg-white/10 hover:border-[#00e5ff]/50 hover:shadow-[0_0_15px_rgba(0,229,255,0.3)] text-gray-400 hover:text-[#00e5ff]'}
+                  `}
+                  title="Sync Data"
+                >
+                  <Icon 
+                    name="RefreshCw" 
+                    size={16} 
+                    className={`transition-all duration-300 ${isRefreshing ? 'animate-spin text-[#00e5ff] drop-shadow-[0_0_10px_#00e5ff]' : ''}`} 
+                  />
+                </button>
+
                 <button onClick={() => setIsSettingsOpen(true)} className="w-full md:w-auto h-[38px] px-4 flex items-center justify-center text-gray-400 bg-white/[0.02] border border-white/10 rounded-full hover:bg-white/10 hover:text-[#00e5ff] hover:border-[#00e5ff]/50 hover:shadow-[0_0_15px_rgba(0,229,255,0.3)] active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer" title="System Settings">
                   <Icon name="Settings" size={16} />
                 </button>
@@ -2274,6 +2365,18 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                 @keyframes liquid-flow { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
                 .anim-acrylic-glare:hover::before { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent); transform: skewX(-25deg); animation: acrylic-glare 1s ease-out; z-index: 50; pointer-events: none; }
                 .anim-liquid-neon { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent); animation: liquid-flow 1.5s linear infinite; }
+                
+                @keyframes critical-pulse {
+                  0%, 100% { box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 6px rgba(251, 191, 36, 0.15); border-color: rgba(251, 191, 36, 0.4); }
+                  50% { box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 25px rgba(251, 191, 36, 0.5); border-color: rgba(251, 191, 36, 1); }
+                }
+                @keyframes expired-pulse {
+                  0%, 100% { box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 6px rgba(244, 63, 94, 0.15); border-color: rgba(244, 63, 94, 0.4); }
+                  50% { box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 25px rgba(244, 63, 94, 0.6); border-color: rgba(244, 63, 94, 1); }
+                }
+                .alarm-critical { animation: critical-pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+                .alarm-expired { animation: expired-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
                 @supports (animation-timeline: view()) {
                   @keyframes holographic-grid { 0% { opacity: 0; transform: perspective(1000px) rotateX(-15deg) translateY(60px) scale(0.85); filter: blur(10px); } 15% { opacity: 1; transform: perspective(1000px) rotateX(0deg) translateY(0) scale(1); filter: blur(0px); } 85% { opacity: 1; transform: perspective(1000px) rotateX(0deg) translateY(0) scale(1); filter: blur(0px); } 100% { opacity: 0; transform: perspective(1000px) rotateX(15deg) translateY(-60px) scale(0.85); filter: blur(10px); } }
                   .scroll-grid-2026 { animation: holographic-grid linear both; animation-timeline: view(); animation-range: cover 0% cover 100%; will-change: transform, opacity, filter; }
@@ -2283,7 +2386,7 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 animate-fadeIn relative z-20">
                 {displayCerts.length > 0 ? (
                   displayCerts.map((cert, index) => {
-                    const status = getExpiryStatus(cert.expiryDate);
+                    const status = getExpiryStatus(cert.expiryDate, theme);
                     const isExpired = status.days <= 0;
                     
                     const isDraggingCert = draggedCertId === cert.id;
@@ -2310,10 +2413,14 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                         onDragLeave={handleCertDragLeave}
                         onDrop={(e) => handleCertDrop(e, cert.id)}
                         onDragEnd={() => { setDraggedCertId(null); setDragOverCertId(null); }}
-                        className={`scroll-grid-2026 anim-acrylic-glare rounded-xl p-4 md:p-5 relative overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02] group cursor-default bg-[#050A15]/80 backdrop-blur-xl border shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_15px_30px_rgba(0,0,0,0.8)]
+                        className={`scroll-grid-2026 anim-acrylic-glare rounded-xl p-4 md:p-5 relative overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02] group cursor-default backdrop-blur-xl border shadow-[0_15px_35px_rgba(0,0,0,0.6)]
                           ${isPip ? 'active:cursor-grabbing' : ''}
-                          ${isDraggingCert ? 'opacity-40 scale-90 blur-[2px] border-dashed border-[#00e5ff]/50' : 'border-white/10 hover:border-[currentColor] hover:shadow-[0_20px_40px_rgba(0,0,0,0.6),0_0_15px_currentColor]'}
+                          ${isDraggingCert ? 'opacity-40 scale-90 blur-[2px] border-dashed border-[#00e5ff]/50 bg-[#050A15]/50' : 'bg-gradient-to-br from-[#1e293b]/90 via-[#0f172a]/95 to-[#02040a]/90 border border-white/5 border-t-white/20 border-l-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),inset_1px_0_1px_rgba(255,255,255,0.1),0_20px_40px_rgba(0,0,0,0.8)] hover:border-[currentColor] hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_20px_50px_rgba(0,0,0,0.9),0_0_20px_currentColor]'}
                           ${isDragOverCert ? 'border-[2px] border-[#00e5ff] shadow-[0_0_30px_rgba(0,229,255,0.6)] scale-[1.05] z-50 bg-[#00e5ff]/10' : ''}
+                          
+                          /* AKTIVASI SENYAP PULSE ALARM BERDASARKAN STATUS */
+                          ${!isDraggingCert && !isDragOverCert && status.label === "CRITICAL" ? "alarm-critical" : ""}
+                          ${!isDraggingCert && !isDragOverCert && status.label === "EXPIRED" ? "alarm-expired" : ""}
                         `} 
                         style={{ color: status.hex || (isExpired ? '#f43f5e' : status.days <= 30 ? '#fbbf24' : '#00e5ff') }}
                       >
@@ -2487,9 +2594,9 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
 
 export default function App() {
   const [auth, setAuth] = useState({
-    isAuthenticated: false,
-    role: null,
-    name: "",
+    isAuthenticated: !!localStorage.getItem("jwt_token"),
+    role: localStorage.getItem("user_role") || null,
+    name: localStorage.getItem("user_name") || "",
   });
   const [fbUser, setFbUser] = useState(null);
 
@@ -2511,17 +2618,17 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const token = sessionStorage.getItem("jwt_token");
-    const role = sessionStorage.getItem("user_role");
-    const name = sessionStorage.getItem("user_name");
+    const token = localStorage.getItem("jwt_token");
+    const role = localStorage.getItem("user_role");
+    const name = localStorage.getItem("user_name");
     if (token && role && name)
       setAuth({ isAuthenticated: true, role: role, name: name });
   }, []);
 
   const handleLogout = () => {
-    sessionStorage.removeItem("jwt_token");
-    sessionStorage.removeItem("user_role");
-    sessionStorage.removeItem("user_name");
+    localStorage.removeItem("jwt_token");
+    localStorage.removeItem("user_role");
+    localStorage.removeItem("user_name");
     setAuth({ isAuthenticated: false, role: null, name: "" });
   };
 
