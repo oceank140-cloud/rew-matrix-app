@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Anchor, Fingerprint, Lock as LucideLock, User as LucideUser } from 'lucide-react';
 import { initializeApp } from "firebase/app";
 import {
   getAuth,
@@ -232,13 +233,12 @@ const CustomStyles = () => (
   />
 );
 
-// --- COMPONENTS ---
+// --- UPDATE: KOMPONEN LOGIN PAGE DENGAN KOMBOS 3D SPLINE + FORM CREW MATRIX ASLI ---
 const LoginPage = ({ onLogin }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  
   const [loadingText, setLoadingText] = useState("OTORISASI AKSES");
 
   const handleLogin = async (e) => {
@@ -310,159 +310,166 @@ const LoginPage = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[#050A15] p-4">
+    <div className="w-full min-h-screen flex flex-col md:flex-row relative bg-[#050A15] overflow-hidden">
+      {/* --- INJEKSI CSS ANIMASI WHY 1988 --- */}
       <style>{`
-        @keyframes neon-pulse-cyan {
-          0%, 100% { text-shadow: 0 0 10px rgba(0, 229, 255, 0.4); }
-          50% { text-shadow: 0 0 15px rgba(0, 229, 255, 0.8), 0 0 25px rgba(0, 229, 255, 0.4); }
+        @keyframes neon-pulse-white {
+          0%, 100% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.4), 0 0 20px rgba(255, 255, 255, 0.2); }
+          50% { text-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 0 30px rgba(255, 255, 255, 0.6); }
         }
         @keyframes neon-pulse-magenta {
-          0%, 100% { text-shadow: 0 0 10px rgba(217, 70, 239, 0.4), 0 0 20px rgba(217, 70, 239, 0.2); }
-          50% { text-shadow: 0 0 15px rgba(217, 70, 239, 0.8), 0 0 30px rgba(217, 70, 239, 0.5); }
+          0%, 100% { text-shadow: 0 0 10px rgba(217, 70, 239, 0.4); opacity: 0.8; }
+          50% { text-shadow: 0 0 20px rgba(217, 70, 239, 0.8); opacity: 1; }
         }
-        @keyframes bracket-breathe-left {
-          0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(-4px); }
+        @keyframes bracket-breathe-vertical {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-3px); }
         }
-        @keyframes bracket-breathe-right {
-          0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(4px); }
+        @keyframes bracket-breathe-vertical-down {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(3px); }
         }
-        .animate-neon-cyan { animation: neon-pulse-cyan 3s ease-in-out infinite; }
-        .animate-neon-magenta { animation: neon-pulse-magenta 3s ease-in-out infinite; }
-        .animate-bracket-l { animation: bracket-breathe-left 4s ease-in-out infinite; }
-        .animate-bracket-r { animation: bracket-breathe-right 4s ease-in-out infinite; }
+        .anim-why-text { animation: neon-pulse-white 3s ease-in-out infinite; }
+        .anim-magenta-glow { animation: neon-pulse-magenta 3s ease-in-out infinite; }
+        .anim-bracket-top { animation: bracket-breathe-vertical 3s ease-in-out infinite; }
+        .anim-bracket-bottom { animation: bracket-breathe-vertical-down 3s ease-in-out infinite; }
         
-        @keyframes cine-fly-left {
-          0% { opacity: 0; transform: translateX(-80px) scale(1.1); filter: blur(8px); }
-          100% { opacity: 1; transform: translateX(0) scale(1); filter: blur(0px); }
-        }
-        @keyframes cine-fly-right {
-          0% { opacity: 0; transform: translateX(80px) scale(1.1); filter: blur(8px); }
-          100% { opacity: 1; transform: translateX(0) scale(1); filter: blur(0px); }
-        }
-        @keyframes cine-fly-up {
-          0% { opacity: 0; transform: translateY(40px); filter: blur(5px); }
-          100% { opacity: 1; transform: translateY(0); filter: blur(0px); }
-        }
-        .anim-cine-title { animation: cine-fly-left 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-        .anim-cine-sub { animation: cine-fly-right 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s both; }
-        .anim-cine-text { animation: cine-fly-up 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.6s both; }
-        .anim-cine-btn { animation: cine-fly-up 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.9s both; }
-
-        @keyframes scanner-sweep {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-        .input-biometric {
-          transition: all 0.3s ease;
-          background: rgba(255, 255, 255, 0.05);
-        }
+        .input-biometric { transition: all 0.3s ease; background: rgba(255, 255, 255, 0.03); }
         .input-biometric:focus {
           border-color: #00e5ff;
-          box-shadow: 0 0 15px rgba(0,229,255,0.2), inset 0 0 10px rgba(0,229,255,0.1);
-          background: linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(0,229,255,0.15) 50%, rgba(255,255,255,0.02) 75%);
-          background-size: 200% 100%;
-          animation: scanner-sweep 2s infinite linear;
+          box-shadow: 0 0 15px rgba(0,229,255,0.15), inset 0 0 10px rgba(0,229,255,0.05);
           outline: none;
-        }
-
-        @keyframes terminal-pulse {
-          0%, 100% { opacity: 1; box-shadow: 0 0 15px rgba(0,229,255,0.4); border-color: #00e5ff; }
-          50% { opacity: 0.8; box-shadow: 0 0 30px rgba(0,229,255,0.8); border-color: white; }
-        }
-        .btn-loading-state {
-          animation: terminal-pulse 0.8s infinite;
-          background: rgba(0, 229, 255, 0.1) !important;
-          color: #00e5ff !important;
         }
       `}</style>
 
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/20 rounded-full blur-[120px]"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-cyan-500/20 rounded-full blur-[100px]"></div>
-      
-      <div className="glass-panel p-6 md:p-10 rounded-2xl w-full max-w-md relative z-10">
-        
-        <div className="flex flex-col items-center justify-center mb-8 relative z-10 cursor-default select-none overflow-hidden pb-2 pt-2">
-          
-          <div className="flex flex-col items-center justify-center mb-6 group">
-            <span className="text-fuchsia-500 text-3xl font-light leading-none mb-1 animate-neon-magenta animate-bracket-l">[</span>
-            <span className="text-white text-xl md:text-2xl font-black leading-none tracking-[0.15em] drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]">WHY</span>
-            <span className="text-fuchsia-500 font-mono text-[9px] md:text-[10px] font-bold tracking-[0.3em] mt-1.5 opacity-80 animate-neon-cyan">1988</span>
-            <span className="text-fuchsia-500 text-3xl font-light leading-none mt-1 animate-neon-magenta animate-bracket-r">]</span>
-          </div>
-
-          <h2 className="text-4xl md:text-[42px] font-bold uppercase tracking-[0.15em] anim-cine-title mb-1 bg-clip-text text-transparent bg-gradient-to-b from-white via-slate-300 to-slate-500 drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]" style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif' }}>
-            Crew Matrix
-          </h2>
-          
-          <h3 className="text-sm md:text-base font-semibold tracking-[0.4em] text-[#d946ef] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] uppercase mb-3 anim-cine-sub">
-            Sertifikat
-          </h3>
-          
-          <p className="text-[#64748b] text-[9px] md:text-[10px] font-mono tracking-[0.3em] uppercase anim-cine-text">
-            Enterprise Certificate System
-          </p>
-
+      {/* PANEL 3D SPLINE (BACKGROUND FULL DI HP, 50% KIRI DI PC) */}
+      <div className="absolute inset-0 w-full h-full md:relative md:w-1/2 md:h-auto overflow-hidden bg-[#02040a] z-0">
+        <div className="absolute inset-0 z-0">
+          <iframe 
+            src="https://my.spline.design/logoreveal-k0mxfileGsO18DXpGVFjt0cE/" 
+            frameBorder="0" 
+            width="100%" 
+            height="100%" 
+            title="MarineVault 3D Logo Reveal"
+            className="w-full h-full scale-[1.1] opacity-60 md:opacity-90 transition-opacity duration-1000"
+            style={{ border: 'none', pointerEvents: 'none' }}
+          />
         </div>
+        
+        {/* Overlay gelap di HP agar form tetap terbaca jelas */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#050A15]/80 via-[#050A15]/40 to-[#050A15]/90 z-10 md:hidden" />
+        
+        {/* Overlay gradasi untuk PC */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#050A15] via-transparent to-transparent z-10 hidden md:block" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#050A15] z-10 hidden md:block" />
+        
+        <div className="absolute bottom-10 left-10 z-20 pointer-events-none font-mono hidden md:block">
+          <span className="text-[10px] uppercase tracking-[0.4em] text-[#00F0FF] block mb-1 drop-shadow-[0_0_5px_#00F0FF]">Quantum Authentication</span>
+          <h3 className="text-white/50 text-[10px] tracking-widest">MARINEVAULT KINEMATICS v2.26</h3>
+        </div>
+      </div>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-900/30 border border-red-500/50 rounded-lg text-red-200 text-xs md:text-sm flex items-center gap-2 anim-cine-text backdrop-blur-md">
-            <Icon name="AlertTriangle" size={16} className="text-red-500 flex-shrink-0" /> 
-            <span>{error}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleLogin} className="space-y-4 md:space-y-5">
-          <div>
-            <label className="block text-[10px] font-bold text-gray-400 mb-1.5 tracking-wider uppercase">
-              NAMA OPERATOR / CREW
-            </label>
-            <div className="relative">
-              <Icon name="User" className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${username ? 'text-[#00e5ff]' : 'text-gray-500'}`} size={18} />
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="input-biometric w-full pl-10 pr-4 py-3 rounded-lg text-sm md:text-base text-white border border-white/10 anim-cine-text"
-                placeholder="Ketik nama Anda..."
-                required
-                disabled={loading}
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-[10px] font-bold text-gray-400 mb-1.5 tracking-wider uppercase">
-              ENCRYPTED KEY (PASSWORD)
-            </label>
-            <div className="relative">
-              <Icon name="Lock" className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${password ? 'text-[#00e5ff]' : 'text-gray-500'}`} size={18} />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input-biometric w-full pl-10 pr-4 py-3 rounded-lg text-sm md:text-base text-white border border-white/10 anim-cine-text placeholder-gray-600"
-                placeholder="Ketik sandi keamanan..."
-                required
-                disabled={loading}
-              />
-            </div>
-          </div>
+      {/* PANEL FORM LOGIN (MELAYANG DI TENGAH PADA HP, 50% KANAN PADA PC) */}
+      <div className="w-full min-h-screen md:min-h-0 md:w-1/2 flex items-center justify-center p-6 md:p-12 relative z-20 bg-transparent md:bg-[#050A15]">
+        
+        {/* Kontainer Form Utama */}
+        <div className="p-8 md:p-10 rounded-2xl w-full max-w-md relative z-10 bg-[#0A0F1C]/70 md:bg-[#0A0F1C]/80 backdrop-blur-2xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.7)] md:shadow-[0_20px_50px_rgba(0,0,0,0.7)]">
           
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full bg-gradient-to-b from-[#1e293b] to-[#0f172a] text-white font-bold text-[11px] md:text-sm tracking-[0.2em] py-3.5 rounded-lg border border-[#334155] border-t-[#94a3b8] shadow-[0_10px_20px_rgba(0,0,0,0.6)] hover:from-[#334155] hover:to-[#1e293b] hover:border-t-white transition-all duration-300 uppercase mt-4 anim-cine-btn relative overflow-hidden group disabled:cursor-wait ${loading ? 'btn-loading-state font-mono' : ''}`}
-          >
-            <span className="relative z-10 drop-shadow-md">
-              {loadingText}
-            </span>
+          {/* Pendaran Latar Belakang Kanan (Khusus PC) */}
+          <div className="absolute top-[10%] right-[10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none hidden md:block"></div>
+          <div className="absolute bottom-[10%] right-[30%] w-[30%] h-[30%] bg-fuchsia-500/10 rounded-full blur-[100px] pointer-events-none hidden md:block"></div>
+          
+          {/* LOGO ANIMASI WHY 1988 (SUSUNAN VERTIKAL) */}
+          <div className="flex flex-col items-center justify-center mb-8 md:mb-10 relative z-10 cursor-default select-none">
+            <span className="text-fuchsia-500 text-2xl md:text-3xl font-light leading-none mb-2 anim-magenta-glow anim-bracket-top">[</span>
+            <span className="text-white text-3xl md:text-4xl font-black leading-none tracking-[0.2em] anim-why-text">WHY</span>
+            <span className="text-fuchsia-400 font-mono text-[10px] md:text-xs font-bold tracking-[0.4em] mt-3 mb-3 anim-magenta-glow">1988</span>
+            <span className="text-fuchsia-500 text-2xl md:text-3xl font-light leading-none anim-magenta-glow anim-bracket-bottom">]</span>
+          </div>
+
+          {/* TYPOGRAPHY CREW MATRIX */}
+          <div className="text-center mb-8 md:mb-10">
+            <h2 className="text-3xl md:text-[42px] font-bold uppercase tracking-[0.15em] leading-tight text-white drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]" style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif' }}>
+              CREW <br className="hidden md:block"/>
+              <span className="text-slate-400">MATRIX</span>
+            </h2>
+            <h3 className="text-xs md:text-base font-semibold tracking-[0.4em] text-[#d946ef] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] uppercase mt-2 mb-3">
+              SERTIFIKAT
+            </h3>
+            <p className="text-[#64748b] text-[8px] md:text-[10px] font-mono tracking-[0.3em] uppercase">
+              ENTERPRISE CERTIFICATE SYSTEM
+            </p>
+          </div>
+
+          {error && (
+            <div className="mb-6 p-3 bg-red-900/30 border border-red-500/50 rounded-lg text-red-200 text-xs md:text-sm flex items-center gap-2 backdrop-blur-md">
+              <Icon name="AlertTriangle" size={16} className="text-red-500 flex-shrink-0" /> 
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* FORM INPUT OTENTIKASI */}
+          <form onSubmit={handleLogin} className="space-y-5 md:space-y-6">
             
-            {!loading && (
-              <div className="absolute top-0 -left-[100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 group-hover:left-[200%] transition-all duration-700 ease-out z-0"></div>
-            )}
-          </button>
-        </form>
+            {/* Input Nama Operator */}
+            <div>
+              <label className="block text-[9px] md:text-[10px] font-bold text-gray-400 mb-2 tracking-wider uppercase">
+                NAMA OPERATOR / CREW
+              </label>
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 group-focus-within:text-[#00e5ff] transition-colors duration-300">
+                  <LucideUser size={18} />
+                </div>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="input-biometric w-full pl-12 pr-4 py-3.5 rounded-lg text-sm text-white border border-white/10 bg-black/20 placeholder-gray-500"
+                  placeholder="Ketik nama Anda..."
+                  required
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            {/* Input Password */}
+            <div>
+              <label className="block text-[9px] md:text-[10px] font-bold text-gray-400 mb-2 tracking-wider uppercase">
+                ENCRYPTED KEY (PASSWORD)
+              </label>
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 group-focus-within:text-[#00e5ff] transition-colors duration-300">
+                  <LucideLock size={18} />
+                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="input-biometric w-full pl-12 pr-4 py-3.5 rounded-lg text-sm text-white border border-white/10 bg-black/20 placeholder-gray-500"
+                  placeholder="Ketik sandi keamanan..."
+                  required
+                  disabled={loading}
+                />
+              </div>
+            </div>
+            
+            {/* Tombol Otorisasi */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-b from-[#1e293b] to-[#0f172a] text-white font-bold text-[10px] md:text-sm tracking-[0.2em] py-4 rounded-lg border border-[#334155] border-t-[#94a3b8] shadow-[0_10px_20px_rgba(0,0,0,0.6)] hover:from-[#334155] hover:to-[#1e293b] hover:border-t-white active:scale-[0.98] transition-all duration-300 uppercase mt-2 md:mt-4 disabled:opacity-70 disabled:cursor-wait"
+            >
+              <span className="relative z-10 drop-shadow-md">
+                {loadingText}
+              </span>
+              
+              {!loading && (
+                <div className="absolute top-0 -left-[100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 group-hover:left-[200%] transition-all duration-700 ease-out z-0"></div>
+              )}
+            </button>
+
+          </form>
+        </div>
       </div>
     </div>
   );
@@ -2245,31 +2252,25 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
             </div>
           </div>
           
-          {/* AREA TOMBOL KANAN ATAS (SETTINGS, EXPORT, ADD CERT - AMAN DARI REGRESI) */}
+          {/* AREA TOMBOL KANAN ATAS */}
           <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full lg:w-auto mt-4 lg:mt-0 relative z-40">
             
-            {/* BLOK INI WAJIB TERKUNCI HANYA UNTUK ADMIN (ISPIP === TRUE) */}
+            {/* 1. TOMBOL SOFT REFRESH (PUBLIK: Tampil untuk PIP & Crew) */}
+            <button 
+              onClick={() => {
+                setIsRefreshing(true);
+                setTimeout(() => setIsRefreshing(false), 1500); 
+              }} 
+              className={`w-full md:w-auto h-[38px] px-4 flex items-center justify-center bg-white/[0.02] border border-white/10 rounded-full transition-all duration-300 backdrop-blur-md cursor-pointer ${isRefreshing ? 'border-[#00e5ff]/50 shadow-[0_0_20px_rgba(0,229,255,0.4)] bg-[#00e5ff]/10' : 'hover:bg-white/10 hover:border-[#00e5ff]/50 hover:shadow-[0_0_15px_rgba(0,229,255,0.3)] text-gray-400 hover:text-[#00e5ff]'}`}
+              title="Sinkronisasi Data"
+              disabled={isRefreshing}
+            >
+              <Icon name="RefreshCw" size={16} className={`transition-all duration-300 ${isRefreshing ? 'animate-spin text-[#00e5ff] drop-shadow-[0_0_10px_#00e5ff]' : ''}`} />
+            </button>
+
+            {/* 2. BLOK KHUSUS ADMIN (HANYA TAMPIL UNTUK PIP) */}
             {isPip && (
               <>
-                {/* TOMBOL SOFT REFRESH (ANTI-LOGOUT) */}
-                <button 
-                  onClick={() => {
-                    setIsRefreshing(true);
-                    // Simulasi penarikan data ulang selama 1.5 detik
-                    setTimeout(() => setIsRefreshing(false), 1500); 
-                  }} 
-                  className={`w-full md:w-auto h-[38px] px-4 flex items-center justify-center bg-white/[0.02] border border-white/10 rounded-full transition-all duration-300 backdrop-blur-md cursor-pointer
-                    ${isRefreshing ? 'border-[#00e5ff]/50 shadow-[0_0_20px_rgba(0,229,255,0.4)] bg-[#00e5ff]/10' : 'hover:bg-white/10 hover:border-[#00e5ff]/50 hover:shadow-[0_0_15px_rgba(0,229,255,0.3)] text-gray-400 hover:text-[#00e5ff]'}
-                  `}
-                  title="Sync Data"
-                >
-                  <Icon 
-                    name="RefreshCw" 
-                    size={16} 
-                    className={`transition-all duration-300 ${isRefreshing ? 'animate-spin text-[#00e5ff] drop-shadow-[0_0_10px_#00e5ff]' : ''}`} 
-                  />
-                </button>
-
                 <button onClick={() => setIsSettingsOpen(true)} className="w-full md:w-auto h-[38px] px-4 flex items-center justify-center text-gray-400 bg-white/[0.02] border border-white/10 rounded-full hover:bg-white/10 hover:text-[#00e5ff] hover:border-[#00e5ff]/50 hover:shadow-[0_0_15px_rgba(0,229,255,0.3)] active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer" title="System Settings">
                   <Icon name="Settings" size={16} />
                 </button>
@@ -2285,18 +2286,17 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                   <div className="relative z-10 group-hover:-translate-y-0.5 group-hover:text-fuchsia-400 transition-transform duration-300"><Icon name="FileDown" size={14} /></div>
                   <span className="relative z-10 group-hover:drop-shadow-[0_0_8px_#d946ef] transition-all whitespace-nowrap">PDF MANIFEST</span>
                 </button>
-              </>
-            )}
 
-            {/* TOMBOL ADD CERTIFICATE (Juga Dikunci Khusus PIP) */}
-            {isPip && currentView === "crew" && selectedCrew && (
-              <button onClick={() => { setEditingCert(null); setIsModalOpen(true); }} className="w-full md:w-auto h-[38px] relative group rounded-full p-[1.5px] bg-gradient-to-r from-fuchsia-500 to-[#00e5ff] shadow-[0_0_20px_rgba(217,70,239,0.25)] hover:shadow-[0_0_30px_rgba(0,229,255,0.4)] active:scale-95 active:shadow-[0_0_40px_rgba(0,229,255,0.7)] transition-all duration-300 cursor-pointer">
-                <div className="relative h-full w-full bg-[#05070a] px-6 rounded-full transition-colors duration-300 group-hover:bg-[#0b111a] group-active:bg-[#00e5ff]/10 flex items-center justify-center">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white group-hover:from-fuchsia-400 group-hover:to-[#00e5ff] text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase transition-all duration-300 drop-shadow-sm flex items-center whitespace-nowrap">
-                    Add Certificate <span className="text-[#00e5ff] group-hover:text-white transition-colors duration-300 ml-1">+</span>
-                  </span>
-                </div>
-              </button>
+                {currentView === "crew" && selectedCrew && (
+                  <button onClick={() => { setEditingCert(null); setIsModalOpen(true); }} className="w-full md:w-auto h-[38px] relative group rounded-full p-[1.5px] bg-gradient-to-r from-fuchsia-500 to-[#00e5ff] shadow-[0_0_20px_rgba(217,70,239,0.25)] hover:shadow-[0_0_30px_rgba(0,229,255,0.4)] active:scale-95 active:shadow-[0_0_40px_rgba(0,229,255,0.7)] transition-all duration-300 cursor-pointer">
+                    <div className="relative h-full w-full bg-[#05070a] px-6 rounded-full transition-colors duration-300 group-hover:bg-[#0b111a] group-active:bg-[#00e5ff]/10 flex items-center justify-center">
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white group-hover:from-fuchsia-400 group-hover:to-[#00e5ff] text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase transition-all duration-300 drop-shadow-sm flex items-center whitespace-nowrap">
+                        Add Certificate <span className="text-[#00e5ff] group-hover:text-white transition-colors duration-300 ml-1">+</span>
+                      </span>
+                    </div>
+                  </button>
+                )}
+              </>
             )}
           </div>
         </header>
@@ -2599,6 +2599,23 @@ export default function App() {
     name: localStorage.getItem("user_name") || "",
   });
   const [fbUser, setFbUser] = useState(null);
+
+  // KILL-SWITCH: Hapus sesi jika pengguna me-refresh browser (F5) atau menutup tab
+  useEffect(() => {
+    const handleUnload = () => {
+      sessionStorage.clear(); // Langsung hancurkan data otentikasi
+      localStorage.removeItem("jwt_token");
+      localStorage.removeItem("user_role");
+      localStorage.removeItem("user_name");
+    };
+
+    // Dengarkan event saat browser direfresh/ditutup
+    window.addEventListener("beforeunload", handleUnload);
+    
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+    };
+  }, []);
 
   useEffect(() => {
     const initAuth = async () => {
