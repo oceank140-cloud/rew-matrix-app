@@ -1005,6 +1005,7 @@ const MARINE_THEMES = {
 const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
   const [activeTheme, setActiveTheme] = useState('cyan');
   const theme = MARINE_THEMES[activeTheme];
+  const isPip = userRole === "pip"; 
 
   // OPTIMASI KRUSIAL: Mencegah CPU/RAM Overload saat mouse digerakkan
   const glowRef = React.useRef(null);
@@ -1042,14 +1043,14 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
   const [dragOverCrewId, setDragOverCrewId] = useState(null);
 
   const handleDragStart = (e, id) => {
-    if (userRole !== "pip") return;
+    if (!isPip) return;
     setDraggedCrewId(id);
     e.dataTransfer.effectAllowed = "move"; 
   };
 
   const handleDragOver = (e, id) => {
     e.preventDefault(); 
-    if (userRole !== "pip" || draggedCrewId === id) return;
+    if (!isPip || draggedCrewId === id) return;
     setDragOverCrewId(id);
   };
 
@@ -1062,7 +1063,7 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
     e.preventDefault();
     setDragOverCrewId(null);
 
-    if (userRole !== "pip" || !draggedCrewId || draggedCrewId === targetId || !fbUser) return;
+    if (!isPip || !draggedCrewId || draggedCrewId === targetId || !fbUser) return;
 
     const draggedCrew = crews.find(c => c.id === draggedCrewId);
     const targetCrew = crews.find(c => c.id === targetId);
@@ -1145,7 +1146,6 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
     return { label: "VALID", class: "border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.1)] bg-green-950/20", icon: <Icon name="CheckCircle" size={16} className="text-green-400" />, days: diffDays, prog, color: "text-green-400", bg: "bg-green-500/10", bar: "bg-green-400", action: "STATUS AMAN", message };
   };
 
-  // --- SMART TIME FORMATTER 2026 ---
   const formatSisaWaktu = (days) => {
     if (days < 0) return `${days} HARI`; // Menampilkan minus untuk yang sudah expired
     if (days === 0) return "HARI INI";
@@ -1198,7 +1198,6 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
     const orderB = b.order !== undefined ? b.order : 999999;
     return orderA - orderB;
   });
-  const isPip = userRole === "pip";
 
   const totalSertifikatInti = sortedCrewCerts.filter(cert => {
     if (!cert.name) return false;
@@ -2063,25 +2062,25 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                 else if (hasCritical) dotColor = "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]";
 
                 const isActive = currentView === "crew" && selectedCrewId === crew.id;
-                
-                const isDraggingCert = draggedCertId === cert.id;
-                const isDragOverCert = dragOverCertId === cert.id;
-
-                // Logika Pencarian Singkatan untuk Mobile (Prioritas Teks Dalam Kurung)
-                let shortCertName = cert.name;
-                const match = cert.name.match(/\(([^)]+)\)/); // Melacak teks di dalam kurung (...)
-                
-                if (match) {
-                  shortCertName = match[1].toUpperCase(); // Hasil: "BUKU PELAUT", "BST", "MCU"
-                } else {
-                  // Fallback jika tidak ada kurung: ambil dari key dictionary
-                  const dictKey = Object.keys(CERT_DICTIONARY).find(key => CERT_DICTIONARY[key].toLowerCase() === cert.name.toLowerCase());
-                  if (dictKey) shortCertName = dictKey.toUpperCase();
-                }
+                const isDragging = draggedCrewId === crew.id;
+                const isDragOver = dragOverCrewId === crew.id;
 
                 return (
                   <div
-                    key={cert.id}
+                    key={crew.id}
+                    draggable={isPip}
+                    onDragStart={(e) => handleDragStart(e, crew.id)}
+                    onDragOver={(e) => handleDragOver(e, crew.id)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, crew.id)}
+                    onDragEnd={() => { setDraggedCrewId(null); setDragOverCrewId(null); }}
+                    onClick={() => { setSelectedCrewId(crew.id); setCurrentView("crew"); }}
+                    className={`scroll-fx-2026 relative p-1.5 mb-2 flex items-center justify-between group/crew transition-all duration-300 ease-out rounded-full border active:scale-[0.98] 
+                      ${isPip ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
+                      ${isActive ? `bg-[#00e5ff]/5 border-[#00e5ff]/40 shadow-[0_0_25px_rgba(0,229,255,0.2),inset_0_0_10px_rgba(0,229,255,0.1)] scale-[1.02] cursor-default` : `bg-white/5 border-transparent hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]`}
+                      ${isDragging ? 'opacity-40 scale-95 blur-[1px] border-dashed border-[#00e5ff]/50' : ''}
+                      ${isDragOver ? 'border-t-[3px] border-t-[#00e5ff] shadow-[0_-15px_20px_rgba(0,229,255,0.3)] bg-gradient-to-b from-[#00e5ff]/20 to-transparent scale-[1.02] z-50 rounded-t-sm' : ''}
+                    `}
                   >
                     <div className="flex items-center flex-1 truncate pointer-events-none">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 transition-all duration-300 border border-white/20 group-hover/crew:border-white/50 shadow-inner
@@ -2217,37 +2216,26 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
             </div>
           </div>
           
-          {/* AREA TOMBOL KANAN ATAS (SETTINGS, EXPORT, ADD CERT) */}
           <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full lg:w-auto mt-4 lg:mt-0 relative z-40">
-            
-            {/* SEMUA TOMBOL INI HANYA MUNCUL JIKA USER ADALAH ADMIN (PIP) */}
             {isPip && (
-              <>
-                <button onClick={() => setIsSettingsOpen(true)} className="w-full md:w-auto h-[38px] px-4 flex items-center justify-center text-gray-400 bg-white/[0.02] border border-white/10 rounded-full hover:bg-white/10 hover:text-[#00e5ff] hover:border-[#00e5ff]/50 hover:shadow-[0_0_15px_rgba(0,229,255,0.3)] active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer" title="System Settings">
-                  <Icon name="Settings" size={16} />
-                </button>
-                
-                <button onClick={exportToCSV} className="w-full md:w-auto h-[38px] px-6 flex items-center justify-center gap-2.5 text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase text-[#00e5ff]/70 bg-gradient-to-r from-[#00e5ff]/5 to-transparent border border-[#00e5ff]/30 rounded-full hover:bg-[#00e5ff]/15 hover:text-white hover:border-[#00e5ff] hover:shadow-[0_0_20px_rgba(0,229,255,0.4),inset_0_0_10px_rgba(0,229,255,0.2)] active:scale-95 transition-all duration-300 backdrop-blur-md group overflow-hidden relative cursor-pointer">
-                  <div className="absolute top-0 -left-[100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 group-hover:left-[200%] transition-all duration-700 ease-out z-0"></div>
-                  <div className="relative z-10 group-hover:-translate-y-0.5 group-hover:text-[#00e5ff] transition-transform duration-300"><Icon name="Download" size={14} /></div>
-                  <span className="relative z-10 group-hover:drop-shadow-[0_0_8px_#00e5ff] transition-all">CSV</span>
-                </button>
-                
-                <button onClick={exportToPDF} className="w-full md:w-auto h-[38px] px-6 flex items-center justify-center gap-2.5 text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase text-fuchsia-400 bg-gradient-to-r from-fuchsia-500/5 to-transparent border border-fuchsia-500/30 rounded-full hover:bg-fuchsia-500/15 hover:text-white hover:border-fuchsia-500 hover:shadow-[0_0_20px_rgba(217,70,239,0.4),inset_0_0_10px_rgba(217,70,239,0.2)] active:scale-95 transition-all duration-300 backdrop-blur-md group overflow-hidden relative cursor-pointer">
-                  <div className="absolute top-0 -left-[100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 group-hover:left-[200%] transition-all duration-700 ease-out z-0"></div>
-                  <div className="relative z-10 group-hover:-translate-y-0.5 group-hover:text-fuchsia-400 transition-transform duration-300"><Icon name="FileDown" size={14} /></div>
-                  <span className="relative z-10 group-hover:drop-shadow-[0_0_8px_#d946ef] transition-all whitespace-nowrap">PDF MANIFEST</span>
-                </button>
-              </>
+              <button onClick={() => setIsSettingsOpen(true)} className="w-full md:w-auto h-[38px] px-4 flex items-center justify-center text-gray-400 bg-white/[0.02] border border-white/10 rounded-full hover:bg-white/10 hover:text-[#00e5ff] hover:border-[#00e5ff]/50 hover:shadow-[0_0_15px_rgba(0,229,255,0.3)] active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer" title="System Settings">
+                <Icon name="Settings" size={16} />
+              </button>
             )}
-
-            {/* TOMBOL ADD CERTIFICATE (Juga Hanya Untuk PIP) */}
+            <button onClick={exportToCSV} className="w-full md:w-auto h-[38px] px-6 flex items-center justify-center gap-2.5 text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase text-[#00e5ff]/70 bg-gradient-to-r from-[#00e5ff]/5 to-transparent border border-[#00e5ff]/30 rounded-full hover:bg-[#00e5ff]/15 hover:text-white hover:border-[#00e5ff] hover:shadow-[0_0_20px_rgba(0,229,255,0.4),inset_0_0_10px_rgba(0,229,255,0.2)] active:scale-95 transition-all duration-300 backdrop-blur-md group overflow-hidden relative cursor-pointer">
+              <div className="absolute top-0 -left-[100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 group-hover:left-[200%] transition-all duration-700 ease-out z-0"></div>
+              <div className="relative z-10 group-hover:-translate-y-0.5 group-hover:text-[#00e5ff] transition-transform duration-300"><Icon name="Download" size={14} /></div>
+              <span className="relative z-10 group-hover:drop-shadow-[0_0_8px_#00e5ff] transition-all">CSV</span>
+            </button>
+            <button onClick={exportToPDF} className="w-full md:w-auto h-[38px] px-6 flex items-center justify-center gap-2.5 text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase text-fuchsia-400 bg-gradient-to-r from-fuchsia-500/5 to-transparent border border-fuchsia-500/30 rounded-full hover:bg-fuchsia-500/15 hover:text-white hover:border-fuchsia-500 hover:shadow-[0_0_20px_rgba(217,70,239,0.4),inset_0_0_10px_rgba(217,70,239,0.2)] active:scale-95 transition-all duration-300 backdrop-blur-md group overflow-hidden relative cursor-pointer">
+              <div className="absolute top-0 -left-[100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 group-hover:left-[200%] transition-all duration-700 ease-out z-0"></div>
+              <div className="relative z-10 group-hover:-translate-y-0.5 group-hover:text-fuchsia-400 transition-transform duration-300"><Icon name="FileDown" size={14} /></div>
+              <span className="relative z-10 group-hover:drop-shadow-[0_0_8px_#d946ef] transition-all whitespace-nowrap">PDF MANIFEST</span>
+            </button>
             {isPip && currentView === "crew" && selectedCrew && (
               <button onClick={() => { setEditingCert(null); setIsModalOpen(true); }} className="w-full md:w-auto h-[38px] relative group rounded-full p-[1.5px] bg-gradient-to-r from-fuchsia-500 to-[#00e5ff] shadow-[0_0_20px_rgba(217,70,239,0.25)] hover:shadow-[0_0_30px_rgba(0,229,255,0.4)] active:scale-95 active:shadow-[0_0_40px_rgba(0,229,255,0.7)] transition-all duration-300 cursor-pointer">
                 <div className="relative h-full w-full bg-[#05070a] px-6 rounded-full transition-colors duration-300 group-hover:bg-[#0b111a] group-active:bg-[#00e5ff]/10 flex items-center justify-center">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white group-hover:from-fuchsia-400 group-hover:to-[#00e5ff] text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase transition-all duration-300 drop-shadow-sm flex items-center whitespace-nowrap">
-                    Add Certificate <span className="text-[#00e5ff] group-hover:text-white transition-colors duration-300 ml-1">+</span>
-                  </span>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white group-hover:from-fuchsia-400 group-hover:to-[#00e5ff] text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase transition-all duration-300 drop-shadow-sm flex items-center whitespace-nowrap">Add Certificate <span className="text-[#00e5ff] group-hover:text-white transition-colors duration-300 ml-1">+</span></span>
                 </div>
               </button>
             )}
@@ -2332,6 +2320,18 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                     
                     const isDraggingCert = draggedCertId === cert.id;
                     const isDragOverCert = dragOverCertId === cert.id;
+
+                    // Logika Pencarian Singkatan untuk Mobile (Prioritas Teks Dalam Kurung)
+                    let shortCertName = cert.name;
+                    const match = cert.name.match(/\(([^)]+)\)/); // Melacak teks di dalam kurung (...)
+                    
+                    if (match) {
+                      shortCertName = match[1].toUpperCase(); // Hasil: "BUKU PELAUT", "BST", "MCU"
+                    } else {
+                      // Fallback jika tidak ada kurung: ambil dari key dictionary
+                      const dictKey = Object.keys(CERT_DICTIONARY).find(key => CERT_DICTIONARY[key].toLowerCase() === cert.name.toLowerCase());
+                      if (dictKey) shortCertName = dictKey.toUpperCase();
+                    }
 
                     return (
                       <div 
