@@ -2216,26 +2216,37 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
             </div>
           </div>
           
+          {/* AREA TOMBOL KANAN ATAS (SETTINGS, EXPORT, ADD CERT - AMAN DARI REGRESI) */}
           <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full lg:w-auto mt-4 lg:mt-0 relative z-40">
+            
+            {/* BLOK INI WAJIB TERKUNCI HANYA UNTUK ADMIN (ISPIP === TRUE) */}
             {isPip && (
-              <button onClick={() => setIsSettingsOpen(true)} className="w-full md:w-auto h-[38px] px-4 flex items-center justify-center text-gray-400 bg-white/[0.02] border border-white/10 rounded-full hover:bg-white/10 hover:text-[#00e5ff] hover:border-[#00e5ff]/50 hover:shadow-[0_0_15px_rgba(0,229,255,0.3)] active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer" title="System Settings">
-                <Icon name="Settings" size={16} />
-              </button>
+              <>
+                <button onClick={() => setIsSettingsOpen(true)} className="w-full md:w-auto h-[38px] px-4 flex items-center justify-center text-gray-400 bg-white/[0.02] border border-white/10 rounded-full hover:bg-white/10 hover:text-[#00e5ff] hover:border-[#00e5ff]/50 hover:shadow-[0_0_15px_rgba(0,229,255,0.3)] active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer" title="System Settings">
+                  <Icon name="Settings" size={16} />
+                </button>
+                
+                <button onClick={exportToCSV} className="w-full md:w-auto h-[38px] px-6 flex items-center justify-center gap-2.5 text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase text-[#00e5ff]/70 bg-gradient-to-r from-[#00e5ff]/5 to-transparent border border-[#00e5ff]/30 rounded-full hover:bg-[#00e5ff]/15 hover:text-white hover:border-[#00e5ff] hover:shadow-[0_0_20px_rgba(0,229,255,0.4),inset_0_0_10px_rgba(0,229,255,0.2)] active:scale-95 transition-all duration-300 backdrop-blur-md group overflow-hidden relative cursor-pointer">
+                  <div className="absolute top-0 -left-[100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 group-hover:left-[200%] transition-all duration-700 ease-out z-0"></div>
+                  <div className="relative z-10 group-hover:-translate-y-0.5 group-hover:text-[#00e5ff] transition-transform duration-300"><Icon name="Download" size={14} /></div>
+                  <span className="relative z-10 group-hover:drop-shadow-[0_0_8px_#00e5ff] transition-all">CSV</span>
+                </button>
+                
+                <button onClick={exportToPDF} className="w-full md:w-auto h-[38px] px-6 flex items-center justify-center gap-2.5 text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase text-fuchsia-400 bg-gradient-to-r from-fuchsia-500/5 to-transparent border border-fuchsia-500/30 rounded-full hover:bg-fuchsia-500/15 hover:text-white hover:border-fuchsia-500 hover:shadow-[0_0_20px_rgba(217,70,239,0.4),inset_0_0_10px_rgba(217,70,239,0.2)] active:scale-95 transition-all duration-300 backdrop-blur-md group overflow-hidden relative cursor-pointer">
+                  <div className="absolute top-0 -left-[100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 group-hover:left-[200%] transition-all duration-700 ease-out z-0"></div>
+                  <div className="relative z-10 group-hover:-translate-y-0.5 group-hover:text-fuchsia-400 transition-transform duration-300"><Icon name="FileDown" size={14} /></div>
+                  <span className="relative z-10 group-hover:drop-shadow-[0_0_8px_#d946ef] transition-all whitespace-nowrap">PDF MANIFEST</span>
+                </button>
+              </>
             )}
-            <button onClick={exportToCSV} className="w-full md:w-auto h-[38px] px-6 flex items-center justify-center gap-2.5 text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase text-[#00e5ff]/70 bg-gradient-to-r from-[#00e5ff]/5 to-transparent border border-[#00e5ff]/30 rounded-full hover:bg-[#00e5ff]/15 hover:text-white hover:border-[#00e5ff] hover:shadow-[0_0_20px_rgba(0,229,255,0.4),inset_0_0_10px_rgba(0,229,255,0.2)] active:scale-95 transition-all duration-300 backdrop-blur-md group overflow-hidden relative cursor-pointer">
-              <div className="absolute top-0 -left-[100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 group-hover:left-[200%] transition-all duration-700 ease-out z-0"></div>
-              <div className="relative z-10 group-hover:-translate-y-0.5 group-hover:text-[#00e5ff] transition-transform duration-300"><Icon name="Download" size={14} /></div>
-              <span className="relative z-10 group-hover:drop-shadow-[0_0_8px_#00e5ff] transition-all">CSV</span>
-            </button>
-            <button onClick={exportToPDF} className="w-full md:w-auto h-[38px] px-6 flex items-center justify-center gap-2.5 text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase text-fuchsia-400 bg-gradient-to-r from-fuchsia-500/5 to-transparent border border-fuchsia-500/30 rounded-full hover:bg-fuchsia-500/15 hover:text-white hover:border-fuchsia-500 hover:shadow-[0_0_20px_rgba(217,70,239,0.4),inset_0_0_10px_rgba(217,70,239,0.2)] active:scale-95 transition-all duration-300 backdrop-blur-md group overflow-hidden relative cursor-pointer">
-              <div className="absolute top-0 -left-[100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 group-hover:left-[200%] transition-all duration-700 ease-out z-0"></div>
-              <div className="relative z-10 group-hover:-translate-y-0.5 group-hover:text-fuchsia-400 transition-transform duration-300"><Icon name="FileDown" size={14} /></div>
-              <span className="relative z-10 group-hover:drop-shadow-[0_0_8px_#d946ef] transition-all whitespace-nowrap">PDF MANIFEST</span>
-            </button>
+
+            {/* TOMBOL ADD CERTIFICATE (Juga Dikunci Khusus PIP) */}
             {isPip && currentView === "crew" && selectedCrew && (
               <button onClick={() => { setEditingCert(null); setIsModalOpen(true); }} className="w-full md:w-auto h-[38px] relative group rounded-full p-[1.5px] bg-gradient-to-r from-fuchsia-500 to-[#00e5ff] shadow-[0_0_20px_rgba(217,70,239,0.25)] hover:shadow-[0_0_30px_rgba(0,229,255,0.4)] active:scale-95 active:shadow-[0_0_40px_rgba(0,229,255,0.7)] transition-all duration-300 cursor-pointer">
                 <div className="relative h-full w-full bg-[#05070a] px-6 rounded-full transition-colors duration-300 group-hover:bg-[#0b111a] group-active:bg-[#00e5ff]/10 flex items-center justify-center">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white group-hover:from-fuchsia-400 group-hover:to-[#00e5ff] text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase transition-all duration-300 drop-shadow-sm flex items-center whitespace-nowrap">Add Certificate <span className="text-[#00e5ff] group-hover:text-white transition-colors duration-300 ml-1">+</span></span>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white group-hover:from-fuchsia-400 group-hover:to-[#00e5ff] text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase transition-all duration-300 drop-shadow-sm flex items-center whitespace-nowrap">
+                    Add Certificate <span className="text-[#00e5ff] group-hover:text-white transition-colors duration-300 ml-1">+</span>
+                  </span>
                 </div>
               </button>
             )}
@@ -2356,11 +2367,11 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                           <div className="flex items-center gap-3 min-w-0 flex-1 pointer-events-none">
                             <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 border transition-all duration-300 shadow-inner ${isExpired ? 'bg-rose-500/10 border-rose-500/30 text-rose-500' : 'bg-white/5 border-white/10 text-gray-300 group-hover:bg-[currentColor]/10 group-hover:border-[currentColor]/30 group-hover:text-white'}`}><Icon name="FileText" size={18} /></div>
                             <div className="min-w-0 flex-1 pr-2">
-                              <h4 className="font-bold text-white text-sm md:text-base leading-tight truncate drop-shadow-md" title={cert.name}>
+                              <h4 className="font-bold text-white group-hover:text-[currentColor] transition-colors duration-300 text-sm md:text-base leading-tight truncate drop-shadow-md" title={cert.name}>
                                 {/* Nama Lengkap untuk Desktop (Layar Menengah ke Atas) */}
                                 <span className="hidden md:inline">{cert.name}</span>
                                 {/* Nama Singkat/Kode untuk HP (Layar Kecil) */}
-                                <span className="inline md:hidden tracking-widest text-[#00e5ff]">{shortCertName}</span>
+                                <span className="inline md:hidden tracking-widest text-[#00e5ff] group-hover:text-[currentColor] transition-colors duration-300">{shortCertName}</span>
                               </h4>
                               <p className="text-[10px] md:text-xs text-gray-400 font-mono mt-0.5 truncate tracking-wider group-hover:text-gray-300 transition-colors">ID: {cert.number}</p>
                             </div>
