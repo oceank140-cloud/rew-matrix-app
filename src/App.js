@@ -1024,7 +1024,7 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
   const [crews, setCrews] = useState([]);
   const [certificates, setCertificates] = useState([]);
   const [selectedCrewId, setSelectedCrewId] = useState(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
   const [inputCrewName, setInputCrewName] = useState("");
   const [inputCrewRank, setInputCrewRank] = useState("");
   const [editingCrewId, setEditingCrewId] = useState(null);
@@ -1888,62 +1888,17 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
           <div className="p-4 flex-1 overflow-hidden flex flex-col">
             <div className="overflow-y-auto flex-1 pr-2 pb-4">
               <div className="mb-8 px-1">
-                <p className="text-[8px] text-[#475569] font-bold tracking-[0.3em] uppercase mb-4 ml-1">
-                  Main Menu
-                </p>
+                <p className="text-[8px] text-[#475569] font-bold tracking-[0.3em] uppercase mb-4 ml-1">Main Menu</p>
                 <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => {
-                      setCurrentView("overview");
-                      setSelectedCrewId(null);
-                    }}
-                    className={`relative flex flex-col items-start p-3.5 border rounded-xl active:scale-105 transition-all duration-300 group cursor-pointer text-left overflow-hidden ${
-                      currentView === "overview"
-                        ? `bg-gradient-to-br ${theme.bgLight} to-transparent ${theme.borderSoft}`
-                        : "bg-[#0a0d14] border-white/5 hover:border-white/20 hover:bg-white/[0.02] hover:shadow-[0_0_15px_rgba(255,255,255,0.02)]"
-                    }`}
-                    style={currentView === "overview" ? { boxShadow: `inset 0 1px 0 rgba(255,255,255,0.1), 0 0 15px ${theme.hex}25` } : {}}
-                  >
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 transition-colors duration-300 ${
-                      currentView === "overview" ? `${theme.bgLight} ${theme.main}` : "bg-white/5 text-[#64748b] group-hover:text-white"
-                    }`}>
-                      <Icon name="Home" size={16} />
-                    </div>
-                    <span className={`text-[9.5px] font-black uppercase tracking-widest mb-1 transition-colors duration-300 ${
-                      currentView === "overview" ? theme.main : "text-gray-400 group-hover:text-white"
-                    }`} style={currentView === "overview" ? { filter: `drop-shadow(0 0 5px ${theme.hex}80)` } : {}}>
-                      Overview
-                    </span>
-                    <span className="text-[#64748b] text-[6.5px] font-mono uppercase tracking-[0.2em] leading-tight">
-                      Global_Status
-                    </span>
+                  <button onClick={() => { setCurrentView("overview"); setSelectedCrewId(null); if (window.innerWidth < 768) setIsSidebarOpen(false); }} className={`relative flex flex-col items-start p-3.5 border rounded-xl active:scale-105 transition-all duration-300 group cursor-pointer text-left overflow-hidden ${currentView === "overview" ? `bg-gradient-to-br ${theme.bgLight} to-transparent ${theme.borderSoft}` : "bg-[#0a0d14] border-white/5 hover:border-white/20 hover:bg-white/[0.02] hover:shadow-[0_0_15px_rgba(255,255,255,0.02)]"}`} style={currentView === "overview" ? { boxShadow: `inset 0 1px 0 rgba(255,255,255,0.1), 0 0 15px ${theme.hex}25` } : {}}>
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 transition-colors duration-300 ${currentView === "overview" ? `${theme.bgLight} ${theme.main}` : "bg-white/5 text-[#64748b] group-hover:text-white"}`}><Icon name="Home" size={16} /></div>
+                    <span className={`text-[9.5px] font-black uppercase tracking-widest mb-1 transition-colors duration-300 ${currentView === "overview" ? theme.main : "text-gray-400 group-hover:text-white"}`} style={currentView === "overview" ? { filter: `drop-shadow(0 0 5px ${theme.hex}80)` } : {}}>Overview</span>
+                    <span className="text-[#64748b] text-[6.5px] font-mono uppercase tracking-[0.2em] leading-tight">Global_Status</span>
                   </button>
-
-                  <button
-                    onClick={() => {
-                      setCurrentView("matrix");
-                      setSelectedCrewId(null);
-                    }}
-                    className={`relative flex flex-col items-start p-3.5 border rounded-xl active:scale-105 transition-all duration-300 group cursor-pointer text-left overflow-hidden ${
-                      currentView === "matrix"
-                        ? `bg-gradient-to-br ${theme.bgLight} to-transparent ${theme.borderSoft}`
-                        : "bg-[#0a0d14] border-white/5 hover:border-white/20 hover:bg-white/[0.02] hover:shadow-[0_0_15px_rgba(255,255,255,0.02)]"
-                    }`}
-                    style={currentView === "matrix" ? { boxShadow: `inset 0 1px 0 rgba(255,255,255,0.1), 0 0 15px ${theme.hex}25` } : {}}
-                  >
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 transition-colors duration-300 ${
-                      currentView === "matrix" ? `${theme.bgLight} ${theme.main}` : "bg-white/5 text-[#64748b] group-hover:text-white"
-                    }`}>
-                      <Icon name="Grid" size={16} />
-                    </div>
-                    <span className={`text-[9.5px] font-black uppercase tracking-widest mb-1 transition-colors duration-300 ${
-                      currentView === "matrix" ? theme.main : "text-gray-400 group-hover:text-white"
-                    }`} style={currentView === "matrix" ? { filter: `drop-shadow(0 0 5px ${theme.hex}80)` } : {}}>
-                      Matrix
-                    </span>
-                    <span className="text-[#64748b] text-[6.5px] font-mono uppercase tracking-[0.2em] leading-tight">
-                      Full_Grid
-                    </span>
+                  <button onClick={() => { setCurrentView("matrix"); setSelectedCrewId(null); if (window.innerWidth < 768) setIsSidebarOpen(false); }} className={`relative flex flex-col items-start p-3.5 border rounded-xl active:scale-105 transition-all duration-300 group cursor-pointer text-left overflow-hidden ${currentView === "matrix" ? `bg-gradient-to-br ${theme.bgLight} to-transparent ${theme.borderSoft}` : "bg-[#0a0d14] border-white/5 hover:border-white/20 hover:bg-white/[0.02] hover:shadow-[0_0_15px_rgba(255,255,255,0.02)]"}`} style={currentView === "matrix" ? { boxShadow: `inset 0 1px 0 rgba(255,255,255,0.1), 0 0 15px ${theme.hex}25` } : {}}>
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 transition-colors duration-300 ${currentView === "matrix" ? `${theme.bgLight} ${theme.main}` : "bg-white/5 text-[#64748b] group-hover:text-white"}`}><Icon name="Grid" size={16} /></div>
+                    <span className={`text-[9.5px] font-black uppercase tracking-widest mb-1 transition-colors duration-300 ${currentView === "matrix" ? theme.main : "text-gray-400 group-hover:text-white"}`} style={currentView === "matrix" ? { filter: `drop-shadow(0 0 5px ${theme.hex}80)` } : {}}>Matrix</span>
+                    <span className="text-[#64748b] text-[6.5px] font-mono uppercase tracking-[0.2em] leading-tight">Full_Grid</span>
                   </button>
                 </div>
               </div>
@@ -2028,18 +1983,13 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
 
               <style>{`
                 @supports (animation-timeline: view()) {
-                  @keyframes cinematic-scroll {
-                    0% { opacity: 0; transform: translateY(30px) scale(0.85); filter: blur(8px); }
-                    15% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0px); }
-                    85% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0px); }
-                    100% { opacity: 0; transform: translateY(-30px) scale(0.85); filter: blur(8px); }
+                  @keyframes cinematic-scroll { 
+                    0% { opacity: 0; transform: translateY(20px) scale(0.9); filter: blur(5px); } 
+                    10% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0px); } 
+                    95% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0px); } 
+                    100% { opacity: 0.5; transform: translateY(-10px) scale(0.95); filter: blur(2px); } 
                   }
-                  .scroll-fx-2026 {
-                    animation: cinematic-scroll linear both;
-                    animation-timeline: view();
-                    animation-range: cover 0% cover 100%;
-                    will-change: transform, opacity, filter;
-                  }
+                  .scroll-fx-2026 { animation: cinematic-scroll linear both; animation-timeline: view(); animation-range: cover 0% cover 100%; will-change: transform, opacity, filter; }
                 }
               `}</style>
 
@@ -2074,7 +2024,11 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                     onDragLeave={handleDragLeave}
                     onDrop={(e) => handleDrop(e, crew.id)}
                     onDragEnd={() => { setDraggedCrewId(null); setDragOverCrewId(null); }}
-                    onClick={() => { setSelectedCrewId(crew.id); setCurrentView("crew"); }}
+                    onClick={() => { 
+                      setSelectedCrewId(crew.id); 
+                      setCurrentView("crew"); 
+                      if (window.innerWidth < 768) setIsSidebarOpen(false);
+                    }}
                     className={`scroll-fx-2026 relative p-1.5 mb-2 flex items-center justify-between group/crew transition-all duration-300 ease-out rounded-full border active:scale-[0.98] 
                       ${isPip ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
                       ${isActive ? `bg-[#00e5ff]/5 border-[#00e5ff]/40 shadow-[0_0_25px_rgba(0,229,255,0.2),inset_0_0_10px_rgba(0,229,255,0.1)] scale-[1.02] cursor-default` : `bg-white/5 border-transparent hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]`}
@@ -2123,6 +2077,9 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                   {crews.length === 0 ? "Database kosong. Silakan tambah crew." : "Tidak ada crew yang sesuai filter."}
                 </div>
               )}
+              
+              {/* BANTALAN SCROLL: Mendorong nama terakhir ke atas (Zona Jernih) */}
+              <div className="h-20 w-full flex-shrink-0 pointer-events-none"></div>
             </div>
           </div>
           
