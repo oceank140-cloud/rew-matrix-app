@@ -2063,25 +2063,25 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                 else if (hasCritical) dotColor = "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]";
 
                 const isActive = currentView === "crew" && selectedCrewId === crew.id;
-                const isDragging = draggedCrewId === crew.id;
-                const isDragOver = dragOverCrewId === crew.id;
+                
+                const isDraggingCert = draggedCertId === cert.id;
+                const isDragOverCert = dragOverCertId === cert.id;
+
+                // Logika Pencarian Singkatan untuk Mobile (Prioritas Teks Dalam Kurung)
+                let shortCertName = cert.name;
+                const match = cert.name.match(/\(([^)]+)\)/); // Melacak teks di dalam kurung (...)
+                
+                if (match) {
+                  shortCertName = match[1].toUpperCase(); // Hasil: "BUKU PELAUT", "BST", "MCU"
+                } else {
+                  // Fallback jika tidak ada kurung: ambil dari key dictionary
+                  const dictKey = Object.keys(CERT_DICTIONARY).find(key => CERT_DICTIONARY[key].toLowerCase() === cert.name.toLowerCase());
+                  if (dictKey) shortCertName = dictKey.toUpperCase();
+                }
 
                 return (
                   <div
-                    key={crew.id}
-                    draggable={isPip}
-                    onDragStart={(e) => handleDragStart(e, crew.id)}
-                    onDragOver={(e) => handleDragOver(e, crew.id)}
-                    onDragLeave={handleDragLeave}
-                    onDrop={(e) => handleDrop(e, crew.id)}
-                    onDragEnd={() => { setDraggedCrewId(null); setDragOverCrewId(null); }}
-                    onClick={() => { setSelectedCrewId(crew.id); setCurrentView("crew"); }}
-                    className={`scroll-fx-2026 relative p-1.5 mb-2 flex items-center justify-between group/crew transition-all duration-300 ease-out rounded-full border active:scale-[0.98] 
-                      ${isPip ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
-                      ${isActive ? `bg-[#00e5ff]/5 border-[#00e5ff]/40 shadow-[0_0_25px_rgba(0,229,255,0.2),inset_0_0_10px_rgba(0,229,255,0.1)] scale-[1.02] cursor-default` : `bg-white/5 border-transparent hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]`}
-                      ${isDragging ? 'opacity-40 scale-95 blur-[1px] border-dashed border-[#00e5ff]/50' : ''}
-                      ${isDragOver ? 'border-t-[3px] border-t-[#00e5ff] shadow-[0_-15px_20px_rgba(0,229,255,0.3)] bg-gradient-to-b from-[#00e5ff]/20 to-transparent scale-[1.02] z-50 rounded-t-sm' : ''}
-                    `}
+                    key={cert.id}
                   >
                     <div className="flex items-center flex-1 truncate pointer-events-none">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 transition-all duration-300 border border-white/20 group-hover/crew:border-white/50 shadow-inner
@@ -2356,7 +2356,12 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                           <div className="flex items-center gap-3 min-w-0 flex-1 pointer-events-none">
                             <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 border transition-all duration-300 shadow-inner ${isExpired ? 'bg-rose-500/10 border-rose-500/30 text-rose-500' : 'bg-white/5 border-white/10 text-gray-300 group-hover:bg-[currentColor]/10 group-hover:border-[currentColor]/30 group-hover:text-white'}`}><Icon name="FileText" size={18} /></div>
                             <div className="min-w-0 flex-1 pr-2">
-                              <h4 className="font-bold text-white text-sm md:text-base leading-tight truncate drop-shadow-md">{cert.name}</h4>
+                              <h4 className="font-bold text-white text-sm md:text-base leading-tight truncate drop-shadow-md" title={cert.name}>
+                                {/* Nama Lengkap untuk Desktop (Layar Menengah ke Atas) */}
+                                <span className="hidden md:inline">{cert.name}</span>
+                                {/* Nama Singkat/Kode untuk HP (Layar Kecil) */}
+                                <span className="inline md:hidden tracking-widest text-[#00e5ff]">{shortCertName}</span>
+                              </h4>
                               <p className="text-[10px] md:text-xs text-gray-400 font-mono mt-0.5 truncate tracking-wider group-hover:text-gray-300 transition-colors">ID: {cert.number}</p>
                             </div>
                           </div>
