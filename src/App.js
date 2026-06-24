@@ -233,13 +233,16 @@ const CustomStyles = () => (
   />
 );
 
-// --- UPDATE: KOMPONEN LOGIN PAGE DENGAN KOMBOS 3D SPLINE + FORM CREW MATRIX ASLI ---
+// --- UPDATE: KOMPONEN LOGIN PAGE (PORTRAIT FLOATING PANEL + MOBILE OPTIMIZED) ---
 const LoginPage = ({ onLogin }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [loadingText, setLoadingText] = useState("OTORISASI AKSES");
+  
+  // State baru untuk mengontrol animasi 3D saat keluar (login sukses)
+  const [isExiting, setIsExiting] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -279,22 +282,20 @@ const LoginPage = ({ onLogin }) => {
           await setDoc(configRef, { adminPass, crewPass });
         }
 
-        if (password === adminPass) {
+        if (password === adminPass || password === crewPass) {
           setLoadingText("[ AKSES DITERIMA ]");
-          localStorage.setItem("jwt_token", "token_pip_dynamic_2026");
-          localStorage.setItem("user_role", "pip");
-          localStorage.setItem("user_name", sanitizedUser);
+          
+          // Memicu animasi warp-out (terbang menembus layar)
+          setIsExiting(true);
+          
+          // Menunggu animasi 3D selesai (800ms) sebelum memuat dashboard
           setTimeout(() => {
-            onLogin({ isAuthenticated: true, role: "pip", name: sanitizedUser });
-          }, 500); 
-        } else if (password === crewPass) {
-          setLoadingText("[ AKSES DITERIMA ]");
-          localStorage.setItem("jwt_token", "token_crew_dynamic_2026");
-          localStorage.setItem("user_role", "crew");
-          localStorage.setItem("user_name", sanitizedUser);
-          setTimeout(() => {
-            onLogin({ isAuthenticated: true, role: "crew", name: sanitizedUser });
-          }, 500);
+            const role = password === adminPass ? "pip" : "crew";
+            localStorage.setItem("jwt_token", `token_${role}_dynamic_2026`);
+            localStorage.setItem("user_role", role);
+            localStorage.setItem("user_name", sanitizedUser);
+            onLogin({ isAuthenticated: true, role: role, name: sanitizedUser });
+          }, 800);
         } else {
           setError("Kredensial tidak valid. Akses Ditolak.");
           setLoading(false);
@@ -310,181 +311,158 @@ const LoginPage = ({ onLogin }) => {
   };
 
   return (
-    <div className="w-full min-h-screen flex flex-col md:flex-row relative bg-[#02040a] overflow-hidden">
-      {/* --- INJEKSI CSS ANIMASI WHY 1988 & BOLA HOLOGRAFIS --- */}
+    // justify-end dan pr-[12%] digunakan untuk mendorong kotak ke sisi kanan layar di PC
+    <div className="w-full min-h-screen relative bg-[#02040a] overflow-hidden flex items-center justify-center md:justify-end md:pr-[12%] p-5 md:p-4 perspective-[1000px]">
+      
+      {/* --- INJEKSI CSS ANIMASI 3D WARP & ANTI-GRAVITASI --- */}
       <style>{`
-        @keyframes neon-pulse-white {
-          0%, 100% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.4), 0 0 20px rgba(255, 255, 255, 0.2); }
-          50% { text-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 0 30px rgba(255, 255, 255, 0.6); }
+        @keyframes neon-pulse-white { 0%, 100% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.4); } 50% { text-shadow: 0 0 20px rgba(255, 255, 255, 0.8); } }
+        @keyframes neon-pulse-magenta { 0%, 100% { text-shadow: 0 0 10px rgba(217, 70, 239, 0.4); opacity: 0.8; } 50% { text-shadow: 0 0 20px rgba(217, 70, 239, 0.8); opacity: 1; } }
+        @keyframes bracket-breathe-vertical { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+        @keyframes bracket-breathe-vertical-down { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(2px); } }
+        
+        /* Animasi Melayang */
+        @keyframes anti-gravity-float {
+          0%, 100% { transform: translateY(0px); box-shadow: 0 40px 80px -20px rgba(0,0,0,0.8), inset 0 2px 2px rgba(255,255,255,0.15), inset 1px 0 2px rgba(255,255,255,0.1); }
+          50% { transform: translateY(-12px); box-shadow: 0 60px 100px -20px rgba(0,0,0,0.9), inset 0 2px 2px rgba(255,255,255,0.25), inset 1px 0 2px rgba(255,255,255,0.15); }
         }
-        @keyframes neon-pulse-magenta {
-          0%, 100% { text-shadow: 0 0 10px rgba(217, 70, 239, 0.4); opacity: 0.8; }
-          50% { text-shadow: 0 0 20px rgba(217, 70, 239, 0.8); opacity: 1; }
+
+        /* 3D Entry (Muncul dari jauh seperti partikel bintang) */
+        @keyframes warp-in {
+          0% { transform: scale(0.3) translateZ(-500px); opacity: 0; filter: blur(20px); }
+          70% { transform: scale(1.05) translateZ(50px); opacity: 1; filter: blur(0px); }
+          100% { transform: scale(1) translateZ(0); opacity: 1; filter: blur(0px); }
         }
-        @keyframes bracket-breathe-vertical {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-3px); }
+
+        /* 3D Exit (Terbang melesat melewati layar saat login sukses) */
+        @keyframes warp-out {
+          0% { transform: scale(1) translateZ(0); opacity: 1; filter: blur(0px); }
+          20% { transform: scale(0.95) translateZ(-50px); opacity: 1; filter: blur(0px); }
+          100% { transform: scale(2) translateZ(500px); opacity: 0; filter: blur(20px); }
         }
-        @keyframes bracket-breathe-vertical-down {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(3px); }
-        }
-        @keyframes orb-float-1 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(30px, 50px) scale(1.2); }
-        }
-        @keyframes orb-float-2 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(-30px, -50px) scale(1.1); }
-        }
+        
         .anim-why-text { animation: neon-pulse-white 3s ease-in-out infinite; }
         .anim-magenta-glow { animation: neon-pulse-magenta 3s ease-in-out infinite; }
         .anim-bracket-top { animation: bracket-breathe-vertical 3s ease-in-out infinite; }
         .anim-bracket-bottom { animation: bracket-breathe-vertical-down 3s ease-in-out infinite; }
-        .orb-1 { animation: orb-float-1 8s ease-in-out infinite; }
-        .orb-2 { animation: orb-float-2 10s ease-in-out infinite; }
+        .anim-floating-panel { animation: anti-gravity-float 6s ease-in-out infinite; }
         
-        .input-biometric { transition: all 0.3s ease; background: rgba(255, 255, 255, 0.03); }
-        .input-biometric:focus {
-          border-color: #00e5ff;
-          box-shadow: 0 0 15px rgba(0,229,255,0.15), inset 0 0 10px rgba(0,229,255,0.05);
-          outline: none;
-        }
+        /* Pemicu Animasi Warp 3D */
+        .animate-3d-entry { animation: warp-in 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-3d-exit { animation: warp-out 0.8s cubic-bezier(0.5, 0, 0.2, 1) forwards; pointer-events: none; }
+        
+        .input-biometric { transition: all 0.3s ease; background: rgba(0, 0, 0, 0.4); box-shadow: inset 0 2px 6px rgba(0,0,0,0.8), 0 1px 1px rgba(255,255,255,0.05); border: 1px solid rgba(0,0,0,0.5); }
+        .input-biometric:focus { border-color: rgba(0, 229, 255, 0.5); box-shadow: inset 0 2px 6px rgba(0,0,0,0.8), 0 0 15px rgba(0,229,255,0.15), inset 0 0 10px rgba(0,229,255,0.05); outline: none; }
       `}</style>
 
-      {/* PANEL 3D SPLINE & NEON ORBS (BACKGROUND FULL DI HP, 50% KIRI DI PC) */}
-      <div className="absolute inset-0 w-full h-full md:relative md:w-1/2 md:h-auto overflow-hidden bg-[#02040a] z-0">
-        
-        {/* BOLA HOLOGRAFIS MEWAH (Tampil cemerlang di HP) */}
-        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-[#00e5ff]/20 rounded-full blur-[90px] orb-1 z-0 pointer-events-none"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-[#d946ef]/20 rounded-full blur-[90px] orb-2 z-0 pointer-events-none" style={{ animationDelay: '2s' }}></div>
-
-        {/* 3D SPLINE ANIMATION */}
-        <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
-          <iframe 
-            src="https://my.spline.design/logoreveal-k0mxfileGsO18DXpGVFjt0cE/" 
-            frameBorder="0" 
-            width="100%" 
-            height="100%" 
-            title="MarineVault 3D Logo Reveal"
-            /* Di HP di-zoom 1.5x agar partikel terlihat jelas dan mewah, Opacity Full 100% */
-            className="w-full h-full scale-[1.5] md:scale-[1.1] opacity-100 transition-opacity duration-1000"
-            style={{ border: 'none', pointerEvents: 'none' }}
-          />
-        </div>
-        
-        {/* Overlay Gelap HP DIHAPUS, diganti dengan overlay transparan sangat tipis agar 3D nyala */}
-        <div className="absolute inset-0 bg-[#02040a]/20 z-20 md:hidden pointer-events-none" />
-        
-        {/* Overlay gradasi untuk PC tetap dipertahankan */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#050A15] via-transparent to-transparent z-20 hidden md:block pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#050A15] z-20 hidden md:block pointer-events-none" />
-        
-        <div className="absolute bottom-10 left-10 z-30 pointer-events-none font-mono hidden md:block">
-          <span className="text-[10px] uppercase tracking-[0.4em] text-[#00F0FF] block mb-1 drop-shadow-[0_0_5px_#00F0FF]">Quantum Authentication</span>
-          <h3 className="text-white/50 text-[10px] tracking-widest">MARINEVAULT KINEMATICS v2.26</h3>
-        </div>
+      {/* LAPISAN 1: BACKGROUND 3D SPLINE */}
+      <div className="absolute inset-0 w-full h-full z-0 flex items-center justify-center pointer-events-none">
+        <iframe 
+          src="https://my.spline.design/logoreveal-k0mxfileGsO18DXpGVFjt0cE/" 
+          frameBorder="0" 
+          width="100%" 
+          height="100%" 
+          title="MarineVault 3D Logo Reveal"
+          className="w-full h-full scale-[1.5] md:scale-[1.1] opacity-90 md:opacity-100 transition-opacity duration-1000"
+          style={{ border: 'none', pointerEvents: 'none' }}
+        />
+        <div className="absolute inset-0 bg-[#02040a]/30 z-10 pointer-events-none" />
       </div>
 
-      {/* PANEL FORM LOGIN (MELAYANG DI TENGAH PADA HP, 50% KANAN PADA PC) */}
-      <div className="w-full min-h-screen md:min-h-0 md:w-1/2 flex items-center justify-center p-5 md:p-12 relative z-30 bg-transparent md:bg-[#050A15]">
+      {/* LAPISAN 2: BUNGKUSAN ANIMASI 3D ENTRY/EXIT */}
+      <div className={`relative z-20 w-full max-w-[420px] ${isExiting ? 'animate-3d-exit' : 'animate-3d-entry'}`}>
         
-        {/* Kontainer Form Utama (Lebih Mewah dengan Kaca Blur Tinggi) */}
-        <div className="p-8 md:p-10 rounded-3xl w-full max-w-md relative z-10 bg-[#0A0F1C]/40 md:bg-[#0A0F1C]/80 backdrop-blur-[32px] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5),inset_0_0_20px_rgba(255,255,255,0.02)]">
+        {/* LAPISAN 3: KOTAK LOGIN PORTRAIT MELAYANG */}
+        <div className="anim-floating-panel flex flex-col w-full rounded-2xl md:rounded-[2rem] overflow-hidden bg-gradient-to-br from-[#0c1322]/80 via-[#050A15]/80 to-[#02040a]/90 backdrop-blur-[24px] border border-white/5 relative">
           
-          {/* Pendaran Latar Belakang Kanan (Khusus PC) */}
-          <div className="absolute top-[10%] right-[10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none hidden md:block"></div>
-          
-          {/* LOGO ANIMASI WHY 1988 (SUSUNAN VERTIKAL) */}
-          <div className="flex flex-col items-center justify-center mb-8 md:mb-10 relative z-10 cursor-default select-none">
-            <span className="text-fuchsia-500 text-2xl md:text-3xl font-light leading-none mb-2 anim-magenta-glow anim-bracket-top">[</span>
-            <span className="text-white text-3xl md:text-4xl font-black leading-none tracking-[0.2em] anim-why-text">WHY</span>
-            <span className="text-fuchsia-400 font-mono text-[10px] md:text-xs font-bold tracking-[0.4em] mt-3 mb-3 anim-magenta-glow">1988</span>
-            <span className="text-fuchsia-500 text-2xl md:text-3xl font-light leading-none anim-magenta-glow anim-bracket-bottom">]</span>
+          {/* Pantulan Cahaya Diagonal (Glare) */}
+          <div className="absolute top-0 left-[-50%] w-[200%] h-[150%] bg-gradient-to-b from-white/[0.05] to-transparent transform -rotate-45 pointer-events-none z-0"></div>
+
+          {/* BAGIAN ATAS: IDENTITAS APLIKASI */}
+          <div className="w-full p-7 pb-5 md:p-8 md:pb-6 flex flex-col items-center justify-center border-b border-white/5 bg-white/[0.01] relative z-10">
+            <div className="flex flex-col items-center justify-center mb-4 md:mb-5 cursor-default select-none">
+              <span className="text-fuchsia-500 text-xl font-light leading-none mb-1.5 anim-magenta-glow anim-bracket-top">[</span>
+              <span className="text-white text-3xl font-black leading-none tracking-[0.2em] anim-why-text">WHY</span>
+              <span className="text-fuchsia-400 font-mono text-[10px] font-bold tracking-[0.4em] mt-2 mb-2 anim-magenta-glow">1988</span>
+              <span className="text-fuchsia-500 text-xl font-light leading-none anim-magenta-glow anim-bracket-bottom">]</span>
+            </div>
+
+            <div className="text-center">
+              <h2 className="text-[22px] md:text-[24px] font-bold uppercase tracking-[0.15em] leading-tight text-white drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]" style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif' }}>
+                CREW <br/>
+                <span className="text-slate-400">MATRIX</span>
+              </h2>
+              <h3 className="text-[9px] font-semibold tracking-[0.4em] text-[#d946ef] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] uppercase mt-2 mb-0">
+                SERTIFIKAT
+              </h3>
+            </div>
           </div>
 
-          {/* TYPOGRAPHY CREW MATRIX */}
-          <div className="text-center mb-8 md:mb-10 relative z-10">
-            <h2 className="text-3xl md:text-[42px] font-bold uppercase tracking-[0.15em] leading-tight text-white drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]" style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif' }}>
-              CREW <br className="hidden md:block"/>
-              <span className="text-slate-400">MATRIX</span>
-            </h2>
-            <h3 className="text-xs md:text-base font-semibold tracking-[0.4em] text-[#d946ef] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] uppercase mt-2 mb-3">
-              SERTIFIKAT
-            </h3>
-            <p className="text-[#64748b] text-[8px] md:text-[10px] font-mono tracking-[0.3em] uppercase">
-              ENTERPRISE CERTIFICATE SYSTEM
-            </p>
-          </div>
-
-          {error && (
-            <div className="mb-6 p-3 bg-red-900/30 border border-red-500/50 rounded-lg text-red-200 text-xs md:text-sm flex items-center gap-2 backdrop-blur-md">
-              <Icon name="AlertTriangle" size={16} className="text-red-500 flex-shrink-0" /> 
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* FORM INPUT OTENTIKASI */}
-          <form onSubmit={handleLogin} className="space-y-5 md:space-y-6 relative z-10">
-            
-            {/* Input Nama Operator */}
-            <div>
-              <label className="block text-[9px] md:text-[10px] font-bold text-gray-300 md:text-gray-400 mb-2 tracking-wider uppercase drop-shadow-md">
-                NAMA OPERATOR / CREW
-              </label>
-              <div className="relative group">
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-[#00e5ff] transition-colors duration-300">
-                  <LucideUser size={18} />
-                </div>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="input-biometric w-full pl-12 pr-4 py-3.5 rounded-xl text-sm text-white border border-white/20 md:border-white/10 bg-black/40 md:bg-black/20 placeholder-gray-500 backdrop-blur-md"
-                  placeholder="Ketik nama Anda..."
-                  required
-                  disabled={loading}
-                />
+          {/* BAGIAN BAWAH: INPUT KREDENSIAL */}
+          <div className="w-full p-7 pt-6 md:p-8 flex flex-col justify-center bg-[#000000]/20 relative z-10">
+            {error && (
+              <div className="mb-4 p-2.5 bg-red-900/30 border border-red-500/50 rounded-lg text-red-200 text-[10px] md:text-xs flex items-center gap-2 backdrop-blur-md">
+                <Icon name="AlertTriangle" size={14} className="text-red-500 flex-shrink-0" /> 
+                <span>{error}</span>
               </div>
-            </div>
-
-            {/* Input Password */}
-            <div>
-              <label className="block text-[9px] md:text-[10px] font-bold text-gray-300 md:text-gray-400 mb-2 tracking-wider uppercase drop-shadow-md">
-                ENCRYPTED KEY (PASSWORD)
-              </label>
-              <div className="relative group">
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-[#00e5ff] transition-colors duration-300">
-                  <LucideLock size={18} />
-                </div>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="input-biometric w-full pl-12 pr-4 py-3.5 rounded-xl text-sm text-white border border-white/20 md:border-white/10 bg-black/40 md:bg-black/20 placeholder-gray-500 backdrop-blur-md"
-                  placeholder="Ketik sandi keamanan..."
-                  required
-                  disabled={loading}
-                />
-              </div>
-            </div>
+            )}
             
-            {/* Tombol Otorisasi */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-b from-[#1e293b] to-[#0f172a] text-white font-bold text-[10px] md:text-sm tracking-[0.2em] py-4 rounded-xl border border-[#334155] border-t-[#94a3b8] shadow-[0_10px_20px_rgba(0,0,0,0.6)] hover:from-[#334155] hover:to-[#1e293b] hover:border-t-white active:scale-[0.98] transition-all duration-300 uppercase mt-2 md:mt-4 disabled:opacity-70 disabled:cursor-wait"
-            >
-              <span className="relative z-10 drop-shadow-md">
-                {loadingText}
-              </span>
+            <form onSubmit={handleLogin} className="space-y-6 w-full">
               
-              {!loading && (
-                <div className="absolute top-0 -left-[100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 group-hover:left-[200%] transition-all duration-700 ease-out z-0"></div>
-              )}
-            </button>
+              {/* Input Nama */}
+              <div>
+                <label className="block text-[9px] font-bold text-gray-400 mb-2 tracking-wider uppercase drop-shadow-md">
+                  NAMA OPERATOR / CREW
+                </label>
+                <div className="relative group">
+                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 group-focus-within:text-[#00e5ff] transition-colors duration-300">
+                    <LucideUser size={16} />
+                  </div>
+                  <input 
+                    type="text" 
+                    value={username} 
+                    onChange={(e) => setUsername(e.target.value)} 
+                    required 
+                    disabled={loading || isExiting} 
+                    placeholder="Ketik nama Anda..."
+                    className="input-biometric w-full pl-12 pr-4 py-4 md:py-3.5 rounded-xl text-sm text-white placeholder-gray-600" 
+                  />
+                </div>
+              </div>
 
-          </form>
+              {/* Input Password */}
+              <div>
+                <label className="block text-[9px] font-bold text-gray-400 mb-2 tracking-wider uppercase drop-shadow-md">
+                  ENCRYPTED KEY (PASSWORD)
+                </label>
+                <div className="relative group">
+                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 group-focus-within:text-[#00e5ff] transition-colors duration-300">
+                    <LucideLock size={16} />
+                  </div>
+                  <input 
+                    type="password" 
+                    value={password} 
+                    onChange={(e) => setPassword(e.target.value)} 
+                    required 
+                    disabled={loading || isExiting} 
+                    placeholder="Ketik sandi keamanan..."
+                    className="input-biometric w-full pl-12 pr-4 py-4 md:py-3.5 rounded-xl text-sm text-white placeholder-gray-600" 
+                  />
+                </div>
+              </div>
+              
+              {/* Tombol Login */}
+              <button 
+                type="submit" 
+                disabled={loading || isExiting}
+                className="w-full bg-gradient-to-b from-[#1e293b] to-[#0f172a] text-white font-bold text-[10px] md:text-[11px] tracking-[0.2em] py-4 rounded-xl border border-[#334155] border-t-[#94a3b8] shadow-[0_10px_20px_rgba(0,0,0,0.6)] hover:from-[#334155] hover:to-[#1e293b] hover:border-t-white active:scale-[0.98] transition-all duration-300 uppercase mt-6 disabled:opacity-70 disabled:cursor-wait relative overflow-hidden"
+              >
+                {loadingText}
+              </button>
+
+            </form>
+          </div>
+
         </div>
       </div>
     </div>
