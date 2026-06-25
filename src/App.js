@@ -233,7 +233,7 @@ const CustomStyles = () => (
   />
 );
 
-// --- UPDATE: KOMPONEN LOGIN PAGE (PORTRAIT FLOATING PANEL + MOBILE OPTIMIZED) ---
+// --- UPDATE: KOMPONEN LOGIN PAGE (STEALTH PROTOCOL / ANTI-SAVE PASSWORD) ---
 const LoginPage = ({ onLogin }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -244,8 +244,9 @@ const LoginPage = ({ onLogin }) => {
   // State baru untuk mengontrol animasi 3D saat keluar (login sukses)
   const [isExiting, setIsExiting] = useState(false);
 
+  // Menerima parameter event 'e' secara opsional
   const handleLogin = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault(); 
     setLoading(true);
     setError("");
 
@@ -310,8 +311,14 @@ const LoginPage = ({ onLogin }) => {
     }, 2000);
   };
 
+  // Sensor Pemicu Tombol Enter
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleLogin(e);
+    }
+  };
+
   return (
-    // justify-end dan pr-[12%] digunakan untuk mendorong kotak ke sisi kanan layar di PC
     <div className="w-full min-h-screen relative bg-[#02040a] overflow-hidden flex items-center justify-center md:justify-end md:pr-[12%] p-5 md:p-4 perspective-[1000px]">
       
       {/* --- INJEKSI CSS ANIMASI 3D WARP & ANTI-GRAVITASI --- */}
@@ -407,7 +414,8 @@ const LoginPage = ({ onLogin }) => {
               </div>
             )}
             
-            <form onSubmit={handleLogin} className="space-y-6 w-full">
+            {/* STEALTH PROTOCOL: form diubah jadi div, onKeyDown ditambahkan */}
+            <div onKeyDown={handleKeyDown} className="space-y-6 w-full">
               
               {/* Input Nama */}
               <div>
@@ -422,9 +430,9 @@ const LoginPage = ({ onLogin }) => {
                     type="text" 
                     value={username} 
                     onChange={(e) => setUsername(e.target.value)} 
-                    required 
                     disabled={loading || isExiting} 
                     placeholder="Ketik nama Anda..."
+                    autoComplete="off"
                     className="input-biometric w-full pl-12 pr-4 py-4 md:py-3.5 rounded-xl text-sm text-white placeholder-gray-600" 
                   />
                 </div>
@@ -443,24 +451,25 @@ const LoginPage = ({ onLogin }) => {
                     type="password" 
                     value={password} 
                     onChange={(e) => setPassword(e.target.value)} 
-                    required 
                     disabled={loading || isExiting} 
                     placeholder="Ketik sandi keamanan..."
+                    autoComplete="new-password"
                     className="input-biometric w-full pl-12 pr-4 py-4 md:py-3.5 rounded-xl text-sm text-white placeholder-gray-600" 
                   />
                 </div>
               </div>
               
-              {/* Tombol Login */}
+              {/* STEALTH PROTOCOL: Tombol tipe submit diubah jadi tipe button */}
               <button 
-                type="submit" 
+                type="button" 
+                onClick={handleLogin}
                 disabled={loading || isExiting}
                 className="w-full bg-gradient-to-b from-[#1e293b] to-[#0f172a] text-white font-bold text-[10px] md:text-[11px] tracking-[0.2em] py-4 rounded-xl border border-[#334155] border-t-[#94a3b8] shadow-[0_10px_20px_rgba(0,0,0,0.6)] hover:from-[#334155] hover:to-[#1e293b] hover:border-t-white active:scale-[0.98] transition-all duration-300 uppercase mt-6 disabled:opacity-70 disabled:cursor-wait relative overflow-hidden"
               >
                 {loadingText}
               </button>
 
-            </form>
+            </div>
           </div>
 
         </div>
@@ -1737,6 +1746,15 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
             box-shadow: 0 0 10px var(--neon-cyan);
             z-index: 50;
           }
+          /* Custom Holographic Tooltip */
+          .tooltip-glass {
+            background: rgba(10, 15, 28, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 229, 255, 0.15);
+          }
+          /* Transisi Header Matrix */
+          th[data-col] { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         `}</style>
 
         <div className="anim-grid-reveal glass-panel rounded-xl border border-white/10 overflow-hidden flex-1 flex flex-col shadow-[0_20px_50px_rgba(0,0,0,0.6)] relative bg-[#050A15]/80">
@@ -1756,7 +1774,7 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
             </div>
           </div>
           
-          <div className="overflow-x-auto flex-1 custom-scrollbar pb-4 relative">
+          <div className="overflow-x-auto flex-1 custom-scrollbar pb-10 relative">
             <table className="w-full text-left border-collapse">
               <thead className="sticky top-0 z-30 bg-[#0A1128]/95 backdrop-blur-md border-b border-white/10 shadow-md">
                 <tr>
@@ -1768,8 +1786,8 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                   {activeCertKeys.map(key => (
                     <th 
                       key={key} 
-                      className="p-3 text-[9px] md:text-[10px] font-mono text-gray-400 uppercase tracking-[0.1em] whitespace-nowrap text-center border-x border-white/5 hover:text-white hover:bg-white/5 transition-colors cursor-default"
-                      title={CERT_DICTIONARY[key]}
+                      data-col={key}
+                      className="p-3 text-[9px] md:text-[10px] font-mono text-gray-500 uppercase tracking-[0.1em] whitespace-nowrap text-center border-x border-white/5 cursor-default"
                     >
                       {key}
                     </th>
@@ -1782,12 +1800,12 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                   return (
                     <tr 
                       key={crew.id} 
-                      className="row-hover-neon hover:bg-white/[0.02] transition-all duration-300 group relative"
+                      className="row-hover-neon hover:bg-white/[0.02] transition-all duration-300 group/row relative"
                       style={{ animationDelay: `${index * 0.05}s` }} 
                     >
-                      <td className="sticky left-0 z-20 bg-[#050A15] p-3 md:p-4 border-r border-white/5 shadow-[2px_0_5px_rgba(0,0,0,0.2)] group-hover:bg-[#0A1128] transition-colors relative">
+                      <td className="sticky left-0 z-20 bg-[#050A15] p-3 md:p-4 border-r border-white/5 shadow-[2px_0_5px_rgba(0,0,0,0.2)] group-hover/row:bg-[#0A1128] transition-colors relative">
                         <div className="flex items-center gap-3">
-                          <div className={`font-semibold text-white text-xs md:text-sm whitespace-nowrap truncate max-w-[150px] md:max-w-[180px] transition-colors drop-shadow-md group-hover:${theme.main}`} title={crew.name}>
+                          <div className={`font-semibold text-white text-xs md:text-sm whitespace-nowrap truncate max-w-[150px] md:max-w-[180px] transition-colors drop-shadow-md group-hover/row:${theme.main}`} title={crew.name}>
                             {crew.name}
                           </div>
                         </div>
@@ -1803,26 +1821,73 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                         if (foundCert) {
                           const status = getExpiryStatus(foundCert.expiryDate, theme);
                           return (
-                            <td key={key} className="p-2 border-x border-white/5 relative z-10 transition-colors group-hover:border-white/10">
+                            <td 
+                              key={key} 
+                              className="p-2 border-x border-white/5 relative z-10 transition-colors group/cell"
+                              onMouseEnter={(e) => {
+                                const th = e.currentTarget.closest('table').querySelector(`th[data-col="${key}"]`);
+                                if(th) { th.style.color = '#00e5ff'; th.style.textShadow = '0 0 8px #00e5ff'; th.style.backgroundColor = 'rgba(255,255,255,0.05)'; }
+                              }}
+                              onMouseLeave={(e) => {
+                                const th = e.currentTarget.closest('table').querySelector(`th[data-col="${key}"]`);
+                                if(th) { th.style.color = ''; th.style.textShadow = ''; th.style.backgroundColor = ''; }
+                              }}
+                            >
                               <div 
-                                title={`${expectedName}\nStatus: ${status.label}\nSisa: ${status.days > 0 ? status.days + ' Hari' : 'Kedaluwarsa'}`}
-                                className={`mx-auto w-7 h-7 md:w-8 md:h-8 rounded-md flex items-center justify-center cursor-help transition-all duration-300 group-hover:scale-110 ${status.bg} border border-white/10 relative overflow-hidden`}
+                                className={`mx-auto w-7 h-7 md:w-8 md:h-8 rounded-md flex items-center justify-center cursor-crosshair transition-all duration-300 group-hover/cell:scale-110 group-hover/cell:border-white/50 ${status.bg} border border-white/10 relative overflow-visible`}
                                 style={{ color: status.hex }}
                               >
-                                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-t from-white/20 to-transparent transition-opacity duration-300"></div>
-                                <div className="scale-75 md:scale-100 relative z-10">{status.icon}</div>
+                                <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent opacity-0 group-hover/cell:opacity-100 transition-opacity"></div>
+                                
+                                {/* IKON VISUAL MENYALA */}
+                                <div className="scale-[0.8] md:scale-100 relative z-10 drop-shadow-md opacity-90 group-hover/cell:opacity-100 group-hover/cell:drop-shadow-[0_0_8px_currentColor]">
+                                  {status.icon}
+                                </div>
+
+                                {/* CUSTOM HOLOGRAPHIC TOOLTIP */}
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 w-max min-w-[160px] tooltip-glass rounded-lg p-3 opacity-0 invisible group-hover/cell:opacity-100 group-hover/cell:visible transition-all duration-300 pointer-events-none translate-y-2 group-hover/cell:translate-y-0 z-[100]">
+                                  <div className="text-[10px] md:text-xs font-bold text-white mb-1.5 uppercase tracking-wider drop-shadow-md border-b border-white/10 pb-1.5">
+                                    {expectedName}
+                                  </div>
+                                  <div className="flex justify-between items-center gap-4 mb-1">
+                                    <span className="text-[9px] font-mono text-gray-400">Status</span>
+                                    <span className="text-[9px] font-mono font-bold" style={{ color: status.hex }}>{status.label}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center gap-4">
+                                    <span className="text-[9px] font-mono text-gray-400">Sisa Waktu</span>
+                                    <span className="text-[9px] font-mono font-bold text-white">
+                                      {foundCert.expiryDate === "Unlimited" ? "Seumur Hidup" : (status.days > 0 ? `${status.days} Hari` : "Kedaluwarsa")}
+                                    </span>
+                                  </div>
+                                  {/* Panah Bawah */}
+                                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-[6px] border-transparent border-t-[rgba(0,229,255,0.3)]"></div>
+                                </div>
                               </div>
                             </td>
                           );
                         }
                         
                         return (
-                          <td key={key} className="p-2 text-center border-x border-white/5 relative z-10">
-                            <div 
-                              title={`${expectedName} (Kosong)`}
-                              className="mx-auto w-7 h-7 md:w-8 md:h-8 rounded-md bg-white/[0.02] border border-dashed border-white/10 flex items-center justify-center transition-colors group-hover:border-white/20 group-hover:bg-white/5"
-                            >
-                              <span className="text-gray-600/50 text-[10px] font-mono group-hover:text-gray-400 transition-colors">-</span>
+                          <td 
+                            key={key} 
+                            className="p-2 text-center border-x border-white/5 relative z-10 group/empty"
+                            onMouseEnter={(e) => {
+                              const th = e.currentTarget.closest('table').querySelector(`th[data-col="${key}"]`);
+                              if(th) { th.style.color = '#fff'; th.style.backgroundColor = 'rgba(255,255,255,0.02)'; }
+                            }}
+                            onMouseLeave={(e) => {
+                              const th = e.currentTarget.closest('table').querySelector(`th[data-col="${key}"]`);
+                              if(th) { th.style.color = ''; th.style.backgroundColor = ''; }
+                            }}
+                          >
+                            <div className="mx-auto w-7 h-7 md:w-8 md:h-8 rounded-md bg-white/[0.01] border border-dashed border-white/10 flex items-center justify-center transition-colors group-hover/empty:border-white/20 group-hover/empty:bg-white/5 relative overflow-visible cursor-crosshair">
+                              <span className="text-gray-600/30 text-[10px] font-mono group-hover/empty:text-gray-400 transition-colors">-</span>
+                              
+                              {/* CUSTOM TOOLTIP (KOSONG) */}
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 w-max tooltip-glass rounded-lg p-2.5 opacity-0 invisible group-hover/empty:opacity-100 group-hover/empty:visible transition-all duration-300 pointer-events-none translate-y-2 group-hover/empty:translate-y-0 z-[100]">
+                                <div className="text-[9px] font-mono text-gray-400 uppercase tracking-widest text-center">Dokumen Kosong</div>
+                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-[5px] border-transparent border-t-[rgba(0,229,255,0.3)]"></div>
+                              </div>
                             </div>
                           </td>
                         );
