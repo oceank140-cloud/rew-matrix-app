@@ -1740,20 +1740,16 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
           .anim-grid-reveal {
             animation: gridSlideUp 1.2s cubic-bezier(0.05, 0.95, 0.05, 1) forwards;
           }
+          .row-hover-neon:hover {
+            background-color: rgba(0, 229, 255, 0.04) !important;
+            box-shadow: inset 0 1px 0 rgba(0,229,255,0.1), inset 0 -1px 0 rgba(0,229,255,0.1);
+          }
           .row-hover-neon:hover td:first-child::before {
             content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
             background: var(--neon-cyan);
-            box-shadow: 0 0 10px var(--neon-cyan);
+            box-shadow: 0 0 15px var(--neon-cyan);
             z-index: 50;
           }
-          /* Custom Holographic Tooltip */
-          .tooltip-glass {
-            background: rgba(10, 15, 28, 0.95);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(0, 229, 255, 0.3);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 229, 255, 0.15);
-          }
-          /* Transisi Header Matrix */
           th[data-col] { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         `}</style>
 
@@ -1774,7 +1770,7 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
             </div>
           </div>
           
-          <div className="overflow-x-auto flex-1 custom-scrollbar pb-10 relative">
+          <div className="overflow-x-auto flex-1 custom-scrollbar pb-24 relative">
             <table className="w-full text-left border-collapse">
               <thead className="sticky top-0 z-30 bg-[#0A1128]/95 backdrop-blur-md border-b border-white/10 shadow-md">
                 <tr>
@@ -1800,7 +1796,7 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                   return (
                     <tr 
                       key={crew.id} 
-                      className="row-hover-neon hover:bg-white/[0.02] transition-all duration-300 group/row relative"
+                      className="row-hover-neon transition-all duration-300 group/row relative"
                       style={{ animationDelay: `${index * 0.05}s` }} 
                     >
                       <td className="sticky left-0 z-20 bg-[#050A15] p-3 md:p-4 border-r border-white/5 shadow-[2px_0_5px_rgba(0,0,0,0.2)] group-hover/row:bg-[#0A1128] transition-colors relative">
@@ -1823,7 +1819,7 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                           return (
                             <td 
                               key={key} 
-                              className="p-2 border-x border-white/5 relative z-10 transition-colors group/cell"
+                              className="p-2 border-x border-white/5 relative z-10 hover:z-[100] transition-colors group/cell"
                               onMouseEnter={(e) => {
                                 const th = e.currentTarget.closest('table').querySelector(`th[data-col="${key}"]`);
                                 if(th) { th.style.color = '#00e5ff'; th.style.textShadow = '0 0 8px #00e5ff'; th.style.backgroundColor = 'rgba(255,255,255,0.05)'; }
@@ -1839,28 +1835,38 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                               >
                                 <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent opacity-0 group-hover/cell:opacity-100 transition-opacity"></div>
                                 
-                                {/* IKON VISUAL MENYALA */}
                                 <div className="scale-[0.8] md:scale-100 relative z-10 drop-shadow-md opacity-90 group-hover/cell:opacity-100 group-hover/cell:drop-shadow-[0_0_8px_currentColor]">
                                   {status.icon}
                                 </div>
 
-                                {/* CUSTOM HOLOGRAPHIC TOOLTIP */}
-                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 w-max min-w-[160px] tooltip-glass rounded-lg p-3 opacity-0 invisible group-hover/cell:opacity-100 group-hover/cell:visible transition-all duration-300 pointer-events-none translate-y-2 group-hover/cell:translate-y-0 z-[100]">
-                                  <div className="text-[10px] md:text-xs font-bold text-white mb-1.5 uppercase tracking-wider drop-shadow-md border-b border-white/10 pb-1.5">
+                                <div 
+                                  className="absolute top-full left-1/2 transform -translate-x-1/2 mt-4 w-max min-w-[220px] bg-[#02040A] rounded-xl p-4 opacity-0 invisible group-hover/cell:opacity-100 group-hover/cell:visible transition-all duration-300 pointer-events-none -translate-y-2 group-hover/cell:translate-y-0 z-[9999]"
+                                  style={{
+                                    border: `2px solid ${status.hex}`,
+                                    boxShadow: `0 20px 40px rgba(0,0,0,1), 0 0 30px ${status.hex}50`
+                                  }}
+                                >
+                                  <div 
+                                    className="absolute bottom-full left-1/2 transform -translate-x-1/2 border-[8px] border-transparent"
+                                    style={{ borderBottomColor: status.hex }}
+                                  ></div>
+                                  
+                                  <div className="text-[11px] md:text-xs font-black text-white mb-3 uppercase tracking-widest drop-shadow-md text-center border-b border-white/20 pb-2.5">
                                     {expectedName}
                                   </div>
-                                  <div className="flex justify-between items-center gap-4 mb-1">
-                                    <span className="text-[9px] font-mono text-gray-400">Status</span>
-                                    <span className="text-[9px] font-mono font-bold" style={{ color: status.hex }}>{status.label}</span>
+                                  
+                                  <div className="flex flex-col gap-2.5">
+                                    <div className="flex justify-between items-center bg-[#0A1128] p-2.5 rounded-lg border border-white/10 shadow-inner">
+                                      <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">Status</span>
+                                      <span className="text-[11px] font-mono font-black drop-shadow-[0_0_8px_currentColor]" style={{ color: status.hex }}>{status.label}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center bg-[#0A1128] p-2.5 rounded-lg border border-white/10 shadow-inner">
+                                      <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">Sisa Waktu</span>
+                                      <span className="text-[11px] font-mono font-bold text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.6)]">
+                                        {foundCert.expiryDate === "Unlimited" ? "SEUMUR HIDUP" : formatSisaWaktu(status.days)}
+                                      </span>
+                                    </div>
                                   </div>
-                                  <div className="flex justify-between items-center gap-4">
-                                    <span className="text-[9px] font-mono text-gray-400">Sisa Waktu</span>
-                                    <span className="text-[9px] font-mono font-bold text-white">
-                                      {foundCert.expiryDate === "Unlimited" ? "Seumur Hidup" : (status.days > 0 ? `${status.days} Hari` : "Kedaluwarsa")}
-                                    </span>
-                                  </div>
-                                  {/* Panah Bawah */}
-                                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-[6px] border-transparent border-t-[rgba(0,229,255,0.3)]"></div>
                                 </div>
                               </div>
                             </td>
@@ -1870,7 +1876,7 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                         return (
                           <td 
                             key={key} 
-                            className="p-2 text-center border-x border-white/5 relative z-10 group/empty"
+                            className="p-2 text-center border-x border-white/5 relative z-10 hover:z-[100] group/empty"
                             onMouseEnter={(e) => {
                               const th = e.currentTarget.closest('table').querySelector(`th[data-col="${key}"]`);
                               if(th) { th.style.color = '#fff'; th.style.backgroundColor = 'rgba(255,255,255,0.02)'; }
@@ -1883,10 +1889,9 @@ const Dashboard = ({ onLogout, userRole, userName, fbUser }) => {
                             <div className="mx-auto w-7 h-7 md:w-8 md:h-8 rounded-md bg-white/[0.01] border border-dashed border-white/10 flex items-center justify-center transition-colors group-hover/empty:border-white/20 group-hover/empty:bg-white/5 relative overflow-visible cursor-crosshair">
                               <span className="text-gray-600/30 text-[10px] font-mono group-hover/empty:text-gray-400 transition-colors">-</span>
                               
-                              {/* CUSTOM TOOLTIP (KOSONG) */}
-                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 w-max tooltip-glass rounded-lg p-2.5 opacity-0 invisible group-hover/empty:opacity-100 group-hover/empty:visible transition-all duration-300 pointer-events-none translate-y-2 group-hover/empty:translate-y-0 z-[100]">
-                                <div className="text-[9px] font-mono text-gray-400 uppercase tracking-widest text-center">Dokumen Kosong</div>
-                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-[5px] border-transparent border-t-[rgba(0,229,255,0.3)]"></div>
+                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-4 w-max min-w-[160px] bg-[#02040A] border-2 border-slate-600 shadow-[0_20px_40px_rgba(0,0,0,1),0_0_20px_rgba(71,85,105,0.4)] rounded-xl p-3 opacity-0 invisible group-hover/empty:opacity-100 group-hover/empty:visible transition-all duration-300 pointer-events-none -translate-y-2 group-hover/empty:translate-y-0 z-[9999]">
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 border-[8px] border-transparent border-b-slate-600"></div>
+                                <div className="text-[10px] font-mono text-gray-300 font-bold uppercase tracking-widest text-center">Dokumen Kosong</div>
                               </div>
                             </div>
                           </td>
